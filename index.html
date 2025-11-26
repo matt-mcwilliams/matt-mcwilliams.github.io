@@ -1,21 +1,132 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-        <!-- Start cookieyes banner --> <script id="cookieyes" type="text/javascript" src="https://cdn-cookieyes.com/client_data/5880e3f55d5b7196c9f07546/script.js"></script> <!-- End cookieyes banner -->
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Document</title>
-        <!-- Google tag (gtag.js) -->
-        <script async src="https://www.googletagmanager.com/gtag/js?id=G-WM0NQY2HW0"></script>
-        <script>
-                window.dataLayer = window.dataLayer || [];
-                function gtag(){dataLayer.push(arguments);}
-                gtag('js', new Date());
-
-                gtag('config', 'G-WM0NQY2HW0');
-        </script>
+        <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+        <title>Matthew McWilliams</title>
+        <style type="text/tailwindcss">
+                @theme {
+                        --color-coral-red: #ff4e50;
+                }
+        </style>
 </head>
-<body>
-        Hi, I'm Matthew
+<body class="pt-8">
+        <h1 class="text-4xl font-bold max-w-3xl mx-auto text-center mb-2">Matthew McWilliams</h1>
+        <p class="max-w-3xl mx-auto text-center">Projects and Blog</p>
+        <p class="max-w-3xl mx-auto text-center mb-6 "></p>
+        <div class="max-w-3xl mx-auto grid grid-cols-2 gap-12 mb-16">
+                <div class="rounded-xl border-4 border-coral-red overflow-hidden w-full h-96 bg-coral-red">
+                        <img src="./imgs/portrait.jpg"
+                                class="object-cover w-full h-full">
+                </div>
+                <div class="h-64 self-center">
+                        <p class="text-xl mb-6">Hello there!</p>
+                        <p class="text-xl mb-6">My name is Matthew McWilliams. </p>
+                        <p class="text-xl mb-6">I'm a dreamer.</p>
+                        <p class="text-xl mb-6">I'm also a programmer, designer, reader, writer, tinkerer, builder, student, athlete, thinker, truth-seeker, and friend.</p>
+                        
+                        <div class="flex">
+                                <a href="https://x.com/mattmcwilli" target="_blank"><img src="./imgs/x-logo.png" alt="" class="h-8"></a>
+                                <a href="https://github.com/matt-mcwilliams" target="_blank"><img src="./imgs/github-logo.png" alt="" class="h-8"></a>
+                        </div>
+                </div>
+        </div>
+        <hr class="mb-12 max-w-3xl mx-auto">
+        <div class="max-w-3xl mx-auto grid grid-cols-2 align-top mb-6 gap-x-12 gap-y-2">
+                <button class="block text-center text-xl border-b-coral-red transition cursor-pointer py-4 border-b-0 hover:border-b-4" id="projects-toggle" onclick="toggleProjects()">Projects</p>
+                <button class="block text-center text-xl border-b-coral-red transition cursor-pointer py-4 border-b-0 hover:border-b-4" id="blog-toggle" onclick="toggleBlog()">Essays</p>
+        </div>
+        <div class="max-w-3xl mx-auto">
+                <div class=" px-8 py-8 min-h-120 flex flex-col rounded-3xl bg-[#0B0F11] text-white mb-8">
+                        <h3 class="font-bold text-3xl mb-4 ">LemmaCraft</h3>
+                        <div class="grid grid-cols-4 gap-x-6 h-fit items-stretch min-h-0">
+                                <div class="col-span-2 min-h-0">
+                                        <img id="lemmaImg" src="./imgs/lemma-craft-2.png" alt="" class="object-fill w-full h-auto rounded-xl">
+                                </div>
+                                <div id="portraitColumn" class="flex flex-col gap-6 min-h-0">
+                                        <img src="./imgs/story-image.png" class="object-cover flex-1 min-h-0 w-full h-full rounded-xl">
+                                        <img src="./imgs/math-image-2.png" class="object-cover flex-2 min-h-0 w-full h-full rounded-xl">
+                                        <!-- <img src="./imgs/portrait.jpg" class="object-cover flex-1 min-h-0 w-full h-full rounded-xl"> -->
+                                </div>
+                                <div class="flex flex-col justify-between">
+                                        <div>
+                                                <p class="mb-2">LemmaCraft is a <strong>math proof game</strong> in which you solve engaging math puzzles as you <strong>rebuild mathematics</strong> from the Peano axioms.</p>
+                                                <p class="mb-2">It also has a "story mode" if you'd like to solve math while participating in a <strong>cozy fantasy adventure</strong>.</p>
+                                        </div>
+                                        <a href="/lemma-craft" class="bg-red-800 hover:bg-red-700 py-4 text-white px-7 text-center rounded-xl">Try it out →</a>
+                                </div>
+                        </div>
+                </div>
+        </div>
+        <div class="max-w-3xl mx-auto hidden">
+                Hello
+        </div>
+        <div class="max-w-3xl mx-auto hidden">
+                Hello
+        </div>
+
+        <script>
+                const projectsToggle = document.getElementById('projects-toggle')
+                const blogToggle = document.getElementById('blog-toggle')
+
+                function toggleProjects() {
+                        projectsToggle.classList.add('border-b-4')
+                        projectsToggle.classList.add('font-bold')
+                        projectsToggle.classList.add('bg-gray-200')
+                        projectsToggle.classList.remove('border-b-0')
+                        blogToggle.classList.remove('border-b-4')
+                        blogToggle.classList.remove('font-bold')
+                        blogToggle.classList.remove('bg-gray-200')
+                        blogToggle.classList.add('border-b-0')
+                }
+                
+                function toggleBlog() {
+                        blogToggle.classList.add('border-b-4')
+                        blogToggle.classList.add('font-bold')
+                        blogToggle.classList.add('bg-gray-200')
+                        blogToggle.classList.remove('border-b-0')
+                        projectsToggle.classList.remove('border-b-4')
+                        projectsToggle.classList.remove('font-bold')
+                        projectsToggle.classList.remove('bg-gray-200')
+                        projectsToggle.classList.add('border-b-0')
+                }
+
+                toggleProjects()
+        </script>
+        <script>
+                // Match the right portraits column height to the left LemmaCraft image.
+                (function(){
+                        const lemmaImg = document.getElementById('lemmaImg')
+                        const portraitCol = document.getElementById('portraitColumn')
+                        let resizeTimer = null
+
+                        function matchPortraitsHeight(){
+                                if(!lemmaImg || !portraitCol) return
+                                // Use the rendered height of the left image
+                                const h = Math.round(lemmaImg.getBoundingClientRect().height)
+                                if(h && h > 0){
+                                        portraitCol.style.height = h + 'px'
+                                }
+                        }
+
+                        function debounceMatch(){
+                                clearTimeout(resizeTimer)
+                                resizeTimer = setTimeout(matchPortraitsHeight, 80)
+                        }
+
+                        // Run when the image finishes loading
+                        if(lemmaImg){
+                                if(lemmaImg.complete) matchPortraitsHeight()
+                                else lemmaImg.addEventListener('load', matchPortraitsHeight)
+                        }
+
+                        // Recalculate on window resize
+                        window.addEventListener('resize', debounceMatch)
+
+                        // Small fallback run after DOM ready
+                        document.addEventListener('DOMContentLoaded', function(){ setTimeout(matchPortraitsHeight, 50) })
+                })()
+        </script>
 </body>
 </html>
