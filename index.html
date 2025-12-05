@@ -37,7 +37,7 @@
                 <button class="block text-center text-xl border-b-coral-red transition cursor-pointer py-4 border-b-0 hover:border-b-4" id="projects-toggle" onclick="toggleProjects()">Projects</p>
                 <button class="block text-center text-xl border-b-coral-red transition cursor-pointer py-4 border-b-0 hover:border-b-4" id="blog-toggle" onclick="toggleBlog()">Essays</p>
         </div>
-        <div class="max-w-3xl mx-auto">
+        <div class="max-w-3xl mx-auto" id="projects">
                 <div class=" px-8 py-8 min-h-120 flex flex-col rounded-3xl bg-[#0B0F11] text-white mb-8">
                         <h3 class="font-bold text-3xl mb-4 ">LemmaCraft</h3>
                         <div class="grid grid-cols-4 gap-x-6 h-fit items-stretch min-h-0">
@@ -59,9 +59,22 @@
                         </div>
                 </div>
         </div>
-        <div class="max-w-3xl mx-auto hidden">
-                Hello
+        <div class="max-w-3xl mx-auto hidden my-8" id="essays">
+                <img src="./imgs/writing-quote.png" alt="" class="rounded-3xl mb-8">
+                <div class="mb-8">
+                        <div class="flex justify-between gap-8">
+                                <a href="./blog/lemma-craft.html" class="block text-coral-red underline font-bold text-lg">LemmaCraft</a>
+                                
+                                <div class="flex gap-3 my-1">
+                                        <div class="bg-purple-200 px-4 text-sm rounded-4xl">Writeup</div>
+                                        <div class="bg-gray-200 px-4 text-sm rounded-4xl">December 2025</div>
+                                </div>
+                        </div>
+                        <p class="line-clamp-2 ">LemmaCraft is a visual math proof engine with a custom parser and internal mathematical model. It allows its users to derive Peano-arithmetic results from only a few axioms. It consists of four chapters designed to teach users the software and introduce key lemmas: a tutorial chapter followed by three chapters that each cover a new mathematical domain: addition, multiplication, and exponentiation. In each chapter, players prove progressively more challenging lemmas about basic operations.</p>
+                </div>
         </div>
+
+        
         <div class="max-w-3xl mx-auto hidden">
                 Hello
         </div>
@@ -69,16 +82,22 @@
         <script>
                 const projectsToggle = document.getElementById('projects-toggle')
                 const blogToggle = document.getElementById('blog-toggle')
+                const projectsEl = document.getElementById('projects')
+                const blogEl = document.getElementById('essays')
 
                 function toggleProjects() {
                         projectsToggle.classList.add('border-b-4')
                         projectsToggle.classList.add('font-bold')
                         projectsToggle.classList.add('bg-gray-200')
                         projectsToggle.classList.remove('border-b-0')
+                        projectsEl.classList.remove('hidden')
                         blogToggle.classList.remove('border-b-4')
                         blogToggle.classList.remove('font-bold')
                         blogToggle.classList.remove('bg-gray-200')
                         blogToggle.classList.add('border-b-0')
+                        blogEl.classList.add('hidden')
+
+                        window.localStorage.setItem('toggle', 'projects')
                 }
                 
                 function toggleBlog() {
@@ -86,13 +105,21 @@
                         blogToggle.classList.add('font-bold')
                         blogToggle.classList.add('bg-gray-200')
                         blogToggle.classList.remove('border-b-0')
+                        blogEl.classList.remove('hidden')
                         projectsToggle.classList.remove('border-b-4')
                         projectsToggle.classList.remove('font-bold')
                         projectsToggle.classList.remove('bg-gray-200')
                         projectsToggle.classList.add('border-b-0')
+                        projectsEl.classList.add('hidden')
+
+                        window.localStorage.setItem('toggle', 'blog')
                 }
 
-                toggleProjects()
+                if (window.localStorage.getItem('toggle') == 'blog') {
+                        toggleBlog()
+                } else {
+                        toggleProjects()
+                }
         </script>
         <script>
                 // Match the right portraits column height to the left LemmaCraft image.

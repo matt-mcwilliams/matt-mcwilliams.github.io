@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+        <title>LemmaCraft Writeup - Matthew McWilliams</title>
+        <style type="text/tailwindcss">
+                @theme {
+                        --color-coral-red: #ff4e50;
+                }
+
+                h1 {
+                        font-size: 32pt;
+                        font-weight: bold;
+                        text-align: center;
+                }
+
+                h2 {
+                        font-size: 16pt;
+                        font-weight: bold;
+                        margin-bottom: 12pt;
+                        margin-top: 24pt;
+                }
+
+                h3 {
+                        font-size: 14pt;
+                        font-weight:bold;
+                        margin-top: 16pt;
+                }
+
+                h4 {
+                        font-size: 14pt;
+                        font-weight:bold;
+                        color: var(--color-coral-red);
+                        margin-top: 16pt;
+                }
+
+                h5 {
+                        font-size: 12pt;
+                        font-weight: bold;
+                        color: darkslategray;
+                        margin-top: 16pt;
+                }
+
+                h6 {
+                        font-size: 12pt;
+                        font-weight: bold;
+                        font-style: italic;
+                        color: darkslategray;
+                        margin-top: 16pt;
+                }
+                
+                body {
+                        line-height: 2;
+                        text-align: justify;
+                }
+                
+                p {
+                        margin-bottom: 12pt;
+                }
+
+                ul {
+                        list-style: disc;
+                        margin-left: 16pt;
+                        margin-bottom: 12pt;
+                }
+
+                code {
+                        background-color: lightgray;
+                        padding: 3px 8px;
+                        white-space: nowrap;
+                        border-radius: 5pt;
+                        letter-spacing: 0.05em;
+                }
+
+                img {
+                        margin-bottom: 12pt;
+                }
+
+                #title-hr {
+                        border-color: var(--color-coral-red);
+                        border-width: 3pt;
+                        border-radius: 100pt;
+                        margin-bottom: 28pt;
+                }
+        </style>
+</head>
+
+<body class="pt-16 max-w-xl mx-auto">
+        <a href="/" class="fixed top-4 left-4 text-2xl bg-gray-200 hover:bg-gray-300 w-14 h-14 pt-2 font-bold text-center rounded-full transition duration-300 z-50">
+                ←
+        </a>
+        <h1 id="lemmacraft" class="mb-8">LemmaCraft</h1>
+        <div class="flex gap-8 justify-between mb-3">
+                <div class="bg-purple-200 px-4 text-sm rounded-4xl">Writeup</div>
+                <div class="bg-gray-200 px-4 text-sm rounded-4xl">December 2025</div>
+        </div>
+        <hr id="title-hr">
+        <p><a href="https://www.mattm.site/lemma-craft" target="_blank" class="text-blue-700 underline">LemmaCraft</a> is a visual math proof engine with a custom parser and internal mathematical model. It allows its
+                users to derive Peano-arithmetic results from only a few axioms. It consists of four chapters designed
+                to teach users the software and introduce key lemmas: a tutorial chapter followed by three chapters that
+                each cover a new mathematical domain: addition, multiplication, and exponentiation. In each chapter,
+                players prove progressively more challenging lemmas about basic operations.</p>
+        <p><img src="./imgs/lemma-craft/screenshot-1.png" alt=""></p>
+        <h2 id="1-background">1 Background</h2>
+        <p>LemmaCraft takes influence from the Natural Number Game. The Natural Number Game is a text-based game built
+                on the math proof language Lean. LemmaCraft takes the level design and philosophy of the Natural Number
+                Game and reimagines the user interface to emphasize approachability and intuition. As an example, to
+                make a certain change in the Natural Number Game, a user might type out a lengthy command; to make the
+                equivalent change in LemmaCraft, they would drag and drop statements to combine and rewrite them.</p>
+        <p>To prove a lemma in both Lean and in LemmaCraft, the lemma is set to be the initial goal and the objective is
+                to make both sides of the mutable goal’s equality the same. There are also a number of hypotheses which
+                are known to be true and are used to manipulate the goal. To make changes to the goal, the user uses
+                various commands or tactics. For example, one such command is the rewrite command, with which one of the
+                hypotheses is used to replace a part of the goal with an equivalent statement, thus simplifying the
+                goal.</p>
+        <p>This is translated into LemmaCraft visually; instead of typing out a rewrite command as one does in Lean, one
+                must drag a block that represents a hypothesis onto the goal. Similar adaptations are made for other
+                commands; for example the reflection command, which solves goals that have both sides matching, is
+                performed by double-clicking on the goal. While this does make LemmaCraft a more difficult starting
+                point for someone wanting to learn the Lean programming language, it is more approachable for someone
+                wanting to learn the philosophy behind formalized math proofs without learning the syntax of software
+                like Lean.</p>
+        <h2 id="2-system-architecture">2 System Architecture</h2>
+        <p>LemmaCraft reimplements math logic without depending on external math programs such as Lean. This is done for
+                several reasons, primarily for control over the internals of the engine and for a simplified hosting and
+                development environment. </p>
+        <p>The system was engineered for extensibility and modularity; ease of adding new commands is the primary
+                architecture principle. Every new command has three parts: changing the UI to include an input for the
+                command, reacting to the user input on the global or level scope, and changing individual statements’
+                content. Thus, the architecture is split into three levels of abstraction: the user interface, the level
+                script, and the math object or MObject class. The user interface serves as the input for the user and
+                communicates the current state of the proof visually. The level script serves as the level manager: it
+                reacts to user input, stores the current state of the proof, and manages each math object. The math
+                object class parses and manipulates math statements. The goal and all of the hypotheses are stored as
+                math objects.</p>
+        <p>The user interface is generated from a template with a generator script. All of the level data resides in a
+                JSON file, and after making changes to it or the template file, a simple script is run to replace parts
+                of the template with each level’s specific information. </p>
+        <p>The level script maintains the state of the program and reacts to user input. It stores all of the level’s
+                state data in a list of windows. Each window captures the state of one goal’s context. Currently,
+                induction is the only tactic which creates multiple goals. Each window includes a goal and a list of
+                hypotheses, all of which are math statements stored as MObjects. When a user presses a keyboard shortcut
+                or interacts with a UI element, the level script takes the appropriate action, either by passing on a
+                change to one of the MObject’s methods or by changing the state of one of the windows.</p>
+        <p>The MObject class maintains individual math statements and stores statement information recursively in a
+                binary tree. The MObject is a syntactic tree, not semantic: there is minimal type-checking and the math
+                statements are stored as strings. Each MObject stores the following information:</p>
+        <ul>
+                <li>A list of chunks, serving as a lexed token stream; each chunk represents either a symbol or a
+                        variable stored as a string. </li>
+                <li>A list of bound variables; each bound variable is universally quantified. Thus the statement with a
+                        variable <code>x</code> bound would have a math representation like this: <code>∀x∈ℕ,x+0=x</code>. </li>
+                <li>A top-level symbol; this symbol represents the operation that would be evaluated last in the order
+                        of operations. In equations, this symbol is the equal sign. </li>
+                <li>A left and right side, representing the left and right sides of the top-level symbol. These are both
+                        MObjects, creating a recursive binary tree structure.</li>
+        </ul>
+        <p>Storing chunks with a name-based identity rather than α-equivalence massively simplifies implementation, but
+                limits some expressiveness in level design and restricts users from naming variables themselves. The
+                alternative approach, which would be necessary if building a general proof language, would be to tag
+                each variable with a unique identification, thus allowing for distinct variables to share a name. A
+                name-based identity is sufficient for Peano-level mathematics because the complexity is limited and
+                users cannot name variables themselves. Thus, the variable names can be controlled such that there will
+                never be duplicate names that represent different variables.</p>
+        <p>Math objects have three abilities or “tactics” that are used to manipulate statements and solve goals:
+                reflections, rewrites, and inductions. These tactics form the core logic of the system. Reflections are
+                performed by double-clicking on the goal. If both sides of the equal sign are the same then the goal is
+                solved; if that was the final goal for the lemma then the reflection concludes the proof. Rewrites are
+                performed by dragging a hypothesis onto the goal or another hypothesis. The hypothesis is of the form
+                <code>a=b</code>, where <code>a</code> and <code>b</code> are expressions shown to be equivalent. In the target statement, all instances
+                of the expression <code>a</code> are replaced with <code>b</code>. This serves as the primary way to simplify goals.</p>
+        <p>MObjects have two primary forms: type declarations and expressions. Type declarations are of the form <code>a : nat</code>, which reads, “a is a natural number.” Currently the only 
+                supported type is natural numbers. Type
+                declarations can also include expressions; for instance <code>2 + 3 : nat</code> is a valid type declaration and
+                reads “the sum of two and three is a natural number.” Expressions encompass everything that is not a
+                type declaration. Equalities are the primary example of expressions found in this game.</p>
+        <h4 id="limitations">Limitations</h4>
+        <p>LemmaCraft is syntactic rather than semantic; MObjects are parsed using chunk list representations and
+                structural equivalence only. The engine does not perform automatic commutative and associative rewrites
+                and statements such as <code>( a + b ) + c</code> must be rewritten manually into statements such as <code>a + ( c + b)</code>. 
+                Variable identity is name-based (no α-equivalence), so levels and lemmas must avoid variable-name
+                collisions. These constraints simplify development but restrict custom lemma solving and require care in
+                level designing.</p>
+        <h2 id="3-core-components">3 Core Components</h2>
+        <h3 id="3-1-parsing-engine">3.1 Parsing Engine</h3>
+        <h4 id="purpose">Purpose</h4>
+        <p>The parsing engine converts raw text into usable chunks organized in a binary tree. It identifies the
+                top-most symbol and recursively splits and parses the remainder of the statement into left and right
+                sides. </p>
+        <h4 id="interface">Interface</h4>
+        <h5 id="input-">Input:</h5>
+        <p>Raw string containing the math statement to be parsed. The string’s symbols must be space-separated and
+                parenthesis-precice so that they can be distinguished from one another. For example, <code>a+b=b+a+0</code> would
+                be written as <code>( a + b ) = ( ( b + a ) + 0 )</code>. This parenthesized form is the canonical representation
+                used for parsing.</p>
+        <p>If a statement involves a universal quantifier, the raw string is prefaced with a variable list and a colon.
+                For example, the canonical representation of <code>∀x,y∈ℕ,x+y≥x</code> is <code>( x y : nat ) : ( ( x + y ) ≥ x )</code>. </p>
+        <h5 id="output-">Output:</h5>
+        <p>Parsed math object.</p>
+        <h4 id="algorithm">Algorithm</h4>
+        <h5 id="1-split-string-into-chunks">1. Split String into Chunks</h5>
+        <p>The first step in the parsing algorithm is to convert the canonical representation string into lexed chunks.
+                The chunk-list is made by splitting the canonical representation at every space and around every symbol.
+        </p>
+        <p>Then, redundant parentheses are removed. Parenthesis are redundant if they can be removed without affecting
+                the meaning or specificity of the equation. A set of parentheses is redundant in exactly two cases:
+                there is exactly one chunk between them, or they directly enclose another set of parentheses such that
+                there is a double parenthesis around the same expression. These scenarios are the only scenarios when
+                parenthesis can be removed without changing the underlying structure of the equation. The list of chunks
+                is stored as a property of the MObject.</p>
+        <h5 id="2-identify-bound-variables">2. Identify Bound Variables</h5>
+        <p>Variables are bound by <code>( x y z : nat ) :</code> preceding the statement. These variables are substitutable for
+                any natural number, the equivalent of the universal quantifier (∀). The next step of the process is
+                identifying which variables are bound. Because this project only deals with natural numbers, it is not
+                necessary to identify their type, <code>nat</code>. This is done by basic search-string pattern identification.</p>
+        <p>After doing this the variable-bounding part of the statement is removed from the chunk list.</p>
+        <h5 id="3-find-top-level-symbol">3. Find Top-Level Symbol</h5>
+        <p>This step involves finding the top-level symbol, which is the symbol that is evaluated last in the statement.
+                For example, in the equation <code>a * b + (c + d)</code>, there are three symbols: one multiplication sign and two
+                plus signs. The first <code>+</code> sign is the top-level symbol because it is evaluated after the <code>*</code> sign, due
+                to order of operations, and after the second <code>+</code>, due to parenthesis. Thus, a symbol cannot be the
+                top-level symbol if it is within a pair of parenthesis or if there is a higher symbol at its level. In
+                an equation, the top-level symbol is the equal sign.</p>
+        <p>To find the top-level symbol, the chunks are scanned from left to right, and the right-most symbol of the
+                highest rank is identified. Chunks within a pair of parentheses are skipped. After identifying the
+                top-level symbol, this symbol is set to be a property of the MObject.</p>
+        <h5 id="4-split-into-left-and-right">4. Split into Left and Right</h5>
+        <p>If a top-level symbol can be identified, the final step is to identify a “left” and “right” side of the
+                equation. While there are some symbols where this is more complex, e.g. the negation sign, negative
+                sign, or a function declaration <code>f(x)</code>, all of the symbols currently implemented are of the same
+                format: The “left” side is the entire statement to the left of the symbol, and the “right” side is the
+                entire statement to the right of the symbol. After identifying the left and right sides, the sides are
+                parsed into new MObjects, thus creating a recursive binary-tree structure of the MObject.</p>
+        <h3 id="3-2-rewrite-engine">3.2 Rewrite Engine</h3>
+        <h4 id="purpose">Purpose</h4>
+        <p>The rewrite engine is used when a part of a statement is substituted for something mathematically equivalent.
+                For example, the statement <code>a + b = c</code> can be rewritten using the statement <code>b = d</code> into <code>a + d = c</code>,
+                given that the first two equations are known to be valid.</p>
+        <h4 id="interface">Interface</h4>
+        <h5 id="input-">Input:</h5>
+        <p>A parsed math object that serves as the target MObject for the rewrite, and a parsed math object that serves
+                as the reference MObject. The target MObject can be any valid math statement, but the reference must be
+                an equality or a type declaration.</p>
+        <p>If the reference MObject is an equality, then the target MObject will undergo a substitution, like the above
+                example in which <code>d</code> is substituted for <code>b</code>. If the reference is a type declaration, then the target
+                MObject will unbind one of its variables; for example, with the target math object <code> ( x : nat ) : x + 0 = x</code>, 
+                if the reference math object is the type declaration <code>a : nat</code>, the resultant equation is <code> a + 0 = a</code>.</p>
+        <h5 id="output-">Output:</h5>
+        <p>The updated target math object.</p>
+        <h4 id="algorithm">Algorithm</h4>
+        <h5 id="1-check-for-variable-unbounding">1. Check for Variable Unbounding</h5>
+        <p>If the reference MObject is a type statement, then the rewrite acts as a variable unbounding. The engine
+                first checks if the reference MObject ends with <code>: nat</code>. If the reference MObject ends with these chunks
+                and the target MObject has bound variables, then the unbounding can proceed. To unbound a variable, the
+                replacement expression is identified by removing the <code>: nat</code> from the target MObject. Then, all
+                instances of the first bound variable in the target MObject are replaced with this expression and the
+                variable is removed from the variable list.</p>
+        <h5 id="2-find-first-match">2. Find First Match</h5>
+        <p>If the reference MObject is not a type statement, then it must be an equality in order to perform a rewrite.
+                Thus, the rewrite can only proceed if the top-level symbol of the reference MObject is an equal sign.
+                After checking this symbol, the find_first_match algorithm in Appendix I is run to find a match, using
+                the left side of the reference MObject as the search expression. The algorithm returns a list of chunks
+                to replace and a variable list of which variables are being unbounded. It works by creating a
+                parenthesis-group representation of the target MObject as noted below and recursively analyzing it until
+                the search expression has been found.</p>
+        <p>If a match is not found, then the rewrite is terminated and reattempted with the left and right sides of the
+                equation swapped. If the sides have already been swapped then the rewrite has failed.</p>
+        <h6 id="-parenthesis-groups-"><em>Parenthesis-Groups</em></h6>
+        <p>Parenthesis-groups are a structure created when looking for a match. They arise from two key insights:</p>
+        <ul>
+                <li>If the search expression is one chunk long, then any instances of that chunk in the target MObject
+                        satisfy the search. </li>
+                <li>If the search expression is more than one chunk long, then either the entire expression is a match,
+                        or the match is found exactly between a pair of parentheses.</li>
+        </ul>
+        <p>The match must be found exactly between a pair of parenthesis because otherwise rewriting may violate the
+                order of operations or take a part of an expression out of context. Consider the expression <code>a+b*d</code>. If
+                we are searching for <code>a+b</code> and want to replace it with <code>c</code>, then avoiding this rule would invalidly
+                result in <code>c*d</code>. If we instead rewrite the expression as <code>a+(b*d)</code>, then it becomes obvious that the rewrite
+                does not make sense. Thus, it is only correct to rewrite a statement if it is parenthesis-bound.</p>
+        <p>The parenthesis-group structure is a list of nodes in a tree of maximal parenthesis-enclosed substrings,
+                recursively separating different groups of parenthesis. When building the structure, each chunk in the
+                MObject is looped through and a node is made for each chunk. Each node has two properties: type and
+                chunk_list. There are three possible types: variable, symbol, and parenthesis. If the chunk is enclosed
+                in a pair of parentheses, then it is of type parentheses. If it matches one of the bound variables in
+                the MObject’s variable list, then it is of type variable. Otherwise, it is of type symbol. All of the
+                chunks within a pair of parentheses form the same node and are stored in the object’s chunk_list.</p>
+        <h5 id="3-identify-the-replacement">3. Identify the Replacement</h5>
+        <p>If a match of the reference MObject’s search expression has been found in the target MObject, then the
+                replacement is prepared for substitution. Recall that the replacement is typically the right side of the
+                equal sign on the reference MObject. To prepare the replacement, the bound variables in the replacement
+                are replaced with their corresponding substitution found in the variable-substitution list created from
+                the match.</p>
+        <h5 id="4-make-the-substitution">4. Make the Substitution</h5>
+        <p>The final step is to make the substitution. This is done by scanning the target MObject for the found match
+                and replacing it with the replacement. The leftmost occurrence of the found match is used for the
+                replacement. After making the substitution, the target MObject is replaced. </p>
+        <h3 id="3-3-level-generation">3.3 Level Generation</h3>
+        <p>The level generation script converts a JSON file with the game data into twenty-six levels using an HTML
+                template.</p>
+        <p>The HTML template contains placeholders in the format <code>{{ placeholderName }}</code>. The template contains the
+                entire user interface in each level.</p>
+        <p>The JSON file is organized as follows:</p>
+        <ul>
+                <li>Chapters (list) <ul>
+                                <li>Chapter path </li>
+                                <li>Chapter name </li>
+                                <li>Chapter levels (list) <ul>
+                                                <li>Level name </li>
+                                                <li>New Axioms or Lemmas able to be referenced on this level </li>
+                                                <li>Level goal </li>
+                                                <li>Level description</li>
+                                        </ul>
+                                </li>
+                        </ul>
+                </li>
+        </ul>
+        <p>The level generator script uses the JSON to fill in the HTML templates.</p>
+        <h2 id="4-conclusion">4 Conclusion</h2>
+        <h3 id="4-1-worked-example">4.1 Worked Example</h3>
+        <p>This section works through proving the statement <code>∀n,0+n=n</code> using LemmaCraft. This is the lemma proved in
+                level 1-5 of the campaign.</p>
+        <p>First, the statement is converted into LemmaCraft’s input format: <code>( n : nat ) : ( 0 + n ) = ( n )</code>. This
+                string is what is found in the JSON file used later for the template. This statement is parsed and set as
+                the goal. The parser then recognizes the bound variable and converts it into a hypothesis; we now have
+                the hypothesis <code>n : nat</code> and the goal <code>0 + n = n</code>. Now, the user must prove the lemma.</p>
+        <p>First, the user drags the <code>n : nat</code> hypothesis onto the induction button. The induction causes two goals to
+                be formed: <code>0 + 0 = 0</code> and <code>0 + succ h = succ h</code>. Two hypotheses have also been added for the second
+                goal: <code>h : nat</code> and <code>0 + h = h</code>. Note that <code>succ h</code> reads “the successor of h.”</p>
+        <p>To prove the first goal, <code>0 + 0 = 0</code>, the axiom “add_zero” of the form <code>(n : nat) : n + 0 = n</code>, is
+                introduced by clicking on it in the axiom panel. This creates the hypothesis <code>(n : nat) : n + 0 = n</code>.
+                By dragging the hypothesis onto the goal, the goal is rewritten. <code>n</code> is implied to represent <code>0</code> and the
+                goal is thus rewritten to be <code>0 = 0</code>, which is solvable by double-clicking on the goal to perform a
+                reflection. The reflection verifies that both sides of the equation are equal; because <code>0</code> is the same
+                as <code>0</code>, the first goal is successfully proven and only the second remains.</p>
+        <p>To prove the second goal, <code>0 + succ h = succ h</code>, the axiom “add_succ” of the form <code>(m n : nat) : m + succ n
+                = succ ( m + n )</code> is introduced by clicking it in the axiom panel. This creates the hypothesis of the
+                axiom. By dragging the hypothesis onto the goal, the goal is rewritten. <code>m</code> is implied to represent <code>0</code>,
+                and <code>n</code> is implied to represent <code>h</code>. This rewrite causes the goal to become <code>succ ( 0 + h ) = succ h</code>.
+                By dragging the second hypothesis introduced during the induction, <code>0 + h = h</code>, onto the goal, the goal
+                can be rewritten into <code>succ ( h ) = succ h</code> and parsed into <code>succ h = succ h</code>. Double-clicking the
+                goal to perform a reflection solves this goal. Because this was the last goal, the lemma proof is
+                completed.</p>
+        <p>Here is a video demonstration of this process:</p>
+        <p>[ VIDEO ]</p>
+        <h3 id="4-2-next-steps">4.2 Next Steps</h3>
+        <p>LemmaCraft was an attempt at creating a proof engine that is entirely graphical. Unlike Lean, which relies on
+                programming, LemmaCraft was able to create a proof of concept that graphical proof solving was not only
+                possible, but capable of offering an intuitively satisfying and strongly motivating user experience. The
+                graphical interface of the program is easier and more approachable for users unfamiliar with math proof
+                concepts. </p>
+        <p>LemmaCraft currently faces several restrictions: firstly, due to the name-based variable bounding system,
+                renaming variables must be done carefully: user interactions cannot create distinct variables with the
+                same name and users cannot create custom lemmas to solve due to the inability of the current system to
+                verify valid syntax.</p>
+        <p>Further development is possible should there be interest in more levels or a more satisfying experience. Here
+                are a few areas candidate for expansion:</p>
+        <h4 id="1-more-levels">1. More Levels</h4>
+        <p>New chapters would involve new abilities and would explore a less concrete mathematical space. It would
+                expand beyond just natural numbers and deal with new abstract types. New abilities inspired from Lean
+                and the Natural Number Game such as <code>intro</code>, <code>cases</code>, and <code>apply</code> would be introduced in new chapters.
+        </p>
+        <h4 id="2-algorithmic-simplification">2. Algorithmic Simplification</h4>
+        <p>Solving long equations that primarily rely on the associative and commutative property is a tedious task. The
+                tactic <code>simp</code> from the Natural Number Game was able to solve most equations of this form and is a likely
+                candidate for future expansion.</p>
+        <h4 id="3-equivalence">3. α-Equivalence</h4>
+        <p>Replacing the name-based variable identification with an ID-based system would allow users to rename
+                variables. Another area that can be expanded upon is the parsing system in general; instead of storing
+                everything as a string, parsing into a semantic representation would enable more types of expressions,
+                enable strict syntax checking, and would allow for custom lemmas by the user.</p>
+        <h4 id="3-graphical-polish">3. Graphical Polish</h4>
+        <p>Adding animations and other polish would make the game feel more responsive and satisfying to use. Currently
+                the only significant example of this is the confetti after each level is solved. Examples to add include
+                a bounce when a lemma is rewritten and a glimmer when a goal is solvable.</p>
+        <h3 id="links">Links</h3>
+        <div class="text-left">
+                LemmaCraft: <a href="https://www.mattm.site/lemma-craft/" class="text-blue-700 underline pl-3 text-nowrap" target="_blank">https://www.mattm.site/lemma-craft/</a>
+                <br>Github Repo: <a href="https://github.com/matt-mcwilliams/lemma-craft" class="text-blue-700 underline pl-3 text-nowrap" target="_blank">https://github.com/matt-mcwilliams/lemma-craft</a>
+                <br>MObject Script: <a href="https://github.com/matt-mcwilliams/lemma-craft/blob/main/js/MObject.js" class="text-blue-700 underline pl-3 text-nowrap" target="_blank">https://github.com/matt-mcwilliams/lemma-craft/blob/main/js/MObject.js</a>
+                <br>Lean: <a href="http://lean-lang.org/" class="text-blue-700 underline pl-3 text-nowrap" target="_blank">http://lean-lang.org/</a>
+                <br>Natural Number Game: <a href="https://adam.math.hhu.de/#/g/leanprover-community/nng4" class="text-blue-700 underline pl-3 text-nowrap" target="_blank">https://adam.math.hhu.de/#/g/leanprover-community/nng4</a>
+        </div>
+<br>
+        <strong>Share this article!</strong>
+        <div class="flex gap-4 justify-left mb-8 ml-3">
+                <a href="https://twitter.com/intent/tweet?text=Check%20out%20this%20LemmaCraft%20writeup!&url=https://matt-mcwilliams.github.io/blog/lemma-craft.html" target="_blank" class="bg-black hover:bg-black text-white px-3 rounded-lg transition duration-300">𝕏</a>
+                <a href="https://www.facebook.com/sharer/sharer.php?u=https://matt-mcwilliams.github.io/blog/lemma-craft.html" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white px-3 rounded-lg transition duration-300">Facebook</a>
+                <a href="https://www.linkedin.com/sharing/share-offsite/?url=https://matt-mcwilliams.github.io/blog/lemma-craft.html" target="_blank" class="bg-blue-700 hover:bg-blue-800 text-white px-3 rounded-lg transition duration-300">LinkedIn</a>
+        </div></div>
+        <strong>Get in touch!</strong>
+        <p>Let me know if you liked this article or want to see more content in LemmaCraft! Follow and message me on X!<br>        <a href="https://twitter.com/mattmcwilli?ref_src=twsrc%5Etfw" class="twitter-follow-button" data-size="large" data-show-screen-name="false" data-dnt="true" data-show-count="false">Follow @x</a><script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+
+</p>
+        <h2 id="5-appendix">5 Appendix</h2>
+        <h3 id="5-1-algorithm-definitions">5.1 Algorithm Definitions</h3>
+        <h4 id="5-1-1-find-_first-_match">5.1.1: find_first_match</h4>
+        <p>This function references <code>check_match</code>, which is defined in section 5.1.2.</p>
+<div class="max-w-xl bg-slate-100 px-6 py-8 font-mono text-sm leading-relaxed border-l-4 border-l-coral-red">
+    <span class="text-blue-700 font-semibold">Algorithm:</span> find_first_match 
+    <br><span class="text-blue-700 font-semibold">Input:</span>
+        <br><span class="pl-8">T – <span class="text-green-700">target MObject</span></span>
+        <br><span class="pl-8">S – <span class="text-green-700">search expression MObject</span></span>
+    <br><span class="text-blue-700 font-semibold">Output:</span>
+        <br><span class="pl-8">(R, σ) where</span>
+            <br><span class="pl-16">R is a list of chunks in T to be replaced,</span>
+            <br><span class="pl-16">σ is a substitution map for bound variables,</span>
+            <br><span class="pl-8">or <span class="text-red-700 font-semibold">FAIL</span> if no match exists</span>
+        <br><span class="text-blue-700 font-semibold">Time Complexity:</span> O( |T| * |S| )
+
+    <br><br><span class="text-blue-700 font-semibold">function</span> find_first_match(T, S):
+    <br>
+
+    <br><span class="pl-8 text-gray-700"># Case 1: attempt full-object match</span>
+    <br><span class="pl-8">σ := <span class="text-purple-700">check_match</span>(T, S)</span>
+    <br><span class="pl-8"><span class="text-blue-700 font-semibold">if</span> σ ≠ <span class="text-red-700 font-semibold">FAIL</span> <span class="text-blue-700 font-semibold">then</span></span>
+        <br><span class="pl-16"><span class="text-blue-700 font-semibold">return</span> (T.chunks, σ)</span>
+
+    <br><br><span class="pl-8 text-gray-700"># Case 2: attempt scan for single chunk</span>
+    <br><span class="pl-8"><span class="text-blue-700 font-semibold">if</span> S.chunks.length = <span class="text-red-700">1</span> <span class="text-blue-700 font-semibold">then</span></span>
+        <br><span class="pl-16"><span class="text-blue-700 font-semibold">for</span> i from <span class="text-red-700">0</span> to T.chunks.length - <span class="text-red-700">1</span> <span class="text-blue-700 font-semibold">do</span></span>
+            <br><span class="pl-24"><span class="text-blue-700 font-semibold">if</span> T.chunks[i] == S.chunks[0] <span class="text-blue-700 font-semibold">then</span></span>
+                <br><span class="pl-32"><span class="text-blue-700 font-semibold">return</span> ([T.chunks[i]], EMPTY)</span>
+        <br><span class="pl-16"><span class="text-blue-700 font-semibold">end for</span></span>
+    <br><span class="pl-8"><span class="text-blue-700 font-semibold">end if</span></span>
+
+    <br><br><span class="pl-8 text-gray-700"># Case 3: recursively search children</span>
+    <br><span class="pl-8"><span class="text-blue-700 font-semibold">for each</span> child C in T.children <span class="text-blue-700 font-semibold">do</span></span>
+        <br><span class="pl-16">(R, σ) := <span class="text-purple-700">find_first_match</span>(C, S)</span>
+        <br><span class="pl-16"><span class="text-blue-700 font-semibold">if</span> R ≠ <span class="text-red-700 font-semibold">FAIL</span> <span class="text-blue-700 font-semibold">then</span></span>
+            <br><span class="pl-24"><span class="text-blue-700 font-semibold">return</span> (R, σ)</span>
+    <br><span class="pl-8"><span class="text-blue-700 font-semibold">end for</span></span>
+
+    <br><br><span class="text-blue-700 font-semibold">return</span> <span class="text-red-700 font-semibold">FAIL</span>
+    <br><span class="text-blue-700 font-semibold">end function</span>
+</div>
+        <h4 id="5-1-2-check-_match">5.1.2: check_match</h4>
+        <p><code>check_match</code> is run during the <code>find_first_match</code> algorithm. It compares two MObjects as it checks for a
+                match, and it returns a variable-substitution mapping if a match is successfully found. The algorithm is
+                used on parenthesis-enclosed search expressions. The match must be found exactly between a pair of
+                parenthesis, as explained in the 3.2 subsection “Parenthesis-Groups.” Thus, the length of the two must
+                be the exact same. Pattern variables are bound variables in the search expression that can stand for
+                anything in the search expression; they can match with any chunk or expression in the target expression.
+        </p>
+<div class="max-w-xl bg-slate-100 px-6 py-8 font-mono text-sm leading-relaxed border-l-4 border-l-coral-red mb-8">
+
+    <span class="text-blue-700 font-semibold">Algorithm:</span> check_match
+    <br><span class="text-blue-700 font-semibold">Input:</span>
+        <br><span class="pl-8">T – <span class="text-green-700">target MObject</span></span>
+        <br><span class="pl-8">S – <span class="text-green-700">search expression MObject</span></span>
+    <br><span class="text-blue-700 font-semibold">Output:</span>
+        <br><span class="pl-8">σ – a substitution map for pattern variables,</span>
+        <br><span class="pl-8">or <span class="text-red-700 font-semibold">FAIL</span> if search expression does not match</span>
+    <br><span class="text-blue-700 font-semibold">Time Complexity:</span> O( |S| )
+<br>
+    <br><span class="text-blue-700 font-semibold">function</span> check_match(T, S):
+    <br>
+    <br><span class="pl-8"><span class="text-blue-700 font-semibold">if</span> T.type ≠ PARENTHESIS <span class="text-blue-700 font-semibold">or</span> S.type ≠ PARENTHESIS <span class="text-blue-700 font-semibold">then</span> <span class="text-red-700 font-semibold">FAIL</span></span>
+<br>
+    <br><span class="pl-8"><span class="text-blue-700 font-semibold">if</span> T.children.length ≠ S.children.length <span class="text-blue-700 font-semibold">then</span> <span class="text-red-700 font-semibold">FAIL</span></span>
+<br>
+    <br><span class="pl-8">σ := EMPTY</span>
+<br>
+    <br><span class="pl-8"><span class="text-blue-700 font-semibold">for</span> i from <span class="text-red-700">0</span> to T.children.length - <span class="text-red-700">1</span> <span class="text-blue-700 font-semibold">do</span></span>
+        <br><span class="pl-16">s := S.children[i]</span>
+        <br><span class="pl-16">t := T.children[i]</span>
+<br>
+        <br><span class="pl-16"><span class="text-blue-700 font-semibold">if</span> s.type ≠ VARIABLE <span class="text-blue-700 font-semibold">and</span> s.type ≠ SYMBOL <span class="text-blue-700 font-semibold">and</span> s.type ≠ PARENTHESIS <span class="text-blue-700 font-semibold">then</span> <span class="text-red-700 font-semibold">FAIL</span></span>
+<br>
+        <br><span class="pl-16 text-gray-700"># A VARIABLE or SYMBOL node has exactly one chunk; a PARENTHESIS node has a list of chunks.</span>
+        <br><span class="pl-16 text-gray-700"># A node’s children represent the recursive tree structure.</span>
+<br>
+        <br><span class="pl-16"><span class="text-blue-700 font-semibold">if</span> s.type = VARIABLE <span class="text-blue-700 font-semibold">then</span></span>
+            <br><span class="pl-24">v := s.chunks[0]</span>
+            <br><span class="pl-24">u := t.chunks</span>
+<br>
+            <br><span class="pl-24"><span class="text-blue-700 font-semibold">if</span> σ[v] ≠ UNDEFINED <span class="text-blue-700 font-semibold">and</span> σ[v] ≠ u <span class="text-blue-700 font-semibold">then</span> <span class="text-red-700 font-semibold">FAIL</span></span>
+<br>
+            <br><span class="pl-24">σ[v] := u</span>
+        <br><span class="pl-16"><span class="text-blue-700 font-semibold">end if</span></span>
+<br>
+        <br><span class="pl-16"><span class="text-blue-700 font-semibold">if</span> s.type = SYMBOL <span class="text-blue-700 font-semibold">then</span></span>
+            <br><span class="pl-24"><span class="text-blue-700 font-semibold">if</span> t.type ≠ SYMBOL <span class="text-blue-700 font-semibold">or</span> s.chunks[0] ≠ t.chunks[0] <span class="text-blue-700 font-semibold">then</span> <span class="text-red-700 font-semibold">FAIL</span></span>
+        <br><span class="pl-16"><span class="text-blue-700 font-semibold">end if</span></span>
+<br>
+        <br><span class="pl-16"><span class="text-blue-700 font-semibold">if</span> s.type = PARENTHESIS <span class="text-blue-700 font-semibold">then</span></span>
+            <br><span class="pl-24">R := <span class="text-purple-700">check_match</span>(t, s)</span>
+<br>
+            <br><span class="pl-24"><span class="text-blue-700 font-semibold">if</span> R = <span class="text-red-700 font-semibold">FAIL</span> <span class="text-blue-700 font-semibold">then</span> <span class="text-red-700 font-semibold">FAIL</span></span>
+<br>
+            <br><span class="pl-24"><span class="text-blue-700 font-semibold">for each</span> (u, v) <span class="text-blue-700 font-semibold">in</span> R <span class="text-blue-700 font-semibold">do</span></span>
+                <br><span class="pl-32"><span class="text-blue-700 font-semibold">if</span> σ[u] ≠ UNDEFINED <span class="text-blue-700 font-semibold">and</span> σ[u] ≠ v <span class="text-blue-700 font-semibold">then</span> <span class="text-red-700 font-semibold">FAIL</span></span>
+<br>
+                <br><span class="pl-32">σ[u] := v</span>
+            <br><span class="pl-24"><span class="text-blue-700 font-semibold">end for</span></span>
+        <br><span class="pl-16"><span class="text-blue-700 font-semibold">end if</span></span>
+    <br><span class="pl-8"><span class="text-blue-700 font-semibold">end for</span></span>
+<br>
+    <br><span class=" pl-8 text-blue-700 font-semibold">return</span> σ
+    <br><span class="text-blue-700 font-semibold">end function</span>
+
+</div>
+
+</body>
+
+</html>
