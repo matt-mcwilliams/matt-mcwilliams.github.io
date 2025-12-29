@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+        <title>Guidance Scale Effects Writeup - Matt McWilliams</title>
+        <link rel="icon" type="image/x-icon" href="/icon.png">
+        <style type="text/tailwindcss">
+                @theme {
+                        --color-coral-red: #ff4e50;
+                }
+
+                h1 {
+                        font-size: 32pt;
+                        font-weight: bold;
+                        text-align: center;
+                }
+
+                h2 {
+                        font-size: 16pt;
+                        font-weight: bold;
+                        margin-bottom: 12pt;
+                        margin-top: 24pt;
+                }
+
+                h3 {
+                        font-size: 14pt;
+                        font-weight:bold;
+                        margin-top: 16pt;
+                }
+
+                h4 {
+                        font-size: 14pt;
+                        font-weight:bold;
+                        color: var(--color-coral-red);
+                        margin-top: 16pt;
+                }
+
+                h5 {
+                        font-size: 12pt;
+                        font-weight: bold;
+                        color: darkslategray;
+                        margin-top: 16pt;
+                }
+
+                h6 {
+                        font-size: 12pt;
+                        font-weight: bold;
+                        font-style: italic;
+                        color: darkslategray;
+                        margin-top: 16pt;
+                }
+                
+                body {
+                        line-height: 2;
+                        text-align: justify;
+                }
+                
+                p {
+                        margin-bottom: 12pt;
+                }
+
+                ul {
+                        list-style: disc;
+                        margin-left: 16pt;
+                        margin-bottom: 12pt;
+                }
+
+                code {
+                        background-color: lightgray;
+                        padding: 3px 8px;
+                        white-space: nowrap;
+                        border-radius: 5pt;
+                        letter-spacing: 0.05em;
+                }
+
+                img {
+                        margin-bottom: 12pt;
+                }
+
+                #title-hr {
+                        border-color: var(--color-coral-red);
+                        border-width: 3pt;
+                        border-radius: 100pt;
+                        margin-bottom: 28pt;
+                }
+        </style>
+</head>
+
+<body class="pt-16 max-w-xl mx-auto">
+        <a href="/" class="fixed top-4 left-4 text-2xl bg-gray-200 hover:bg-gray-300 w-14 h-14 pt-2 font-bold text-center rounded-full transition duration-300 z-50">
+                ←
+        </a>
+        <h1 id="lemmacraft" class="mb-8 leading-tight">Guidance Scale Effects in Classifier-Free Diffusion Models</h1>
+        <div class="flex gap-8 justify-between mb-3">
+                <div class="flex gap-4">
+                        <div class="bg-purple-200 px-4 py-1 text-sm rounded-4xl">Writeup</div>
+                        <div class="bg-red-200 px-4 py-1 text-sm rounded-4xl">AI</div>
+
+                </div>
+                <div class="bg-gray-200 px-4 py-1 text-sm rounded-4xl">December 2025</div>
+        </div>
+        <hr id="title-hr">
+
+        <p>This project seeks to understand the effects of guidance scale on classifier-free sampling of conditional diffusion models. We trained a conditioned UNET diffusion model on the MNIST dataset and sampled using classifier-free guidance. Classifier-free guidance is essential for modern image generation diffusion models, allowing label-dependent features become more prominant simply by changing a variable, the guidance scale.</p>
+
+        <img src="imgs/guidance-scale-effects/samples.png" alt="">
+
+        <p>Choosing a correct guidance scale is critical during sampling. Low guidance scales result in cross-class artifacts and inadequate label representation, high guidance scales result in extreme pixel values and a lack of diversity; the optimal guidance scale lies between these extremes, balancing the tradeoff between diversity and label faithfulness.</p>
+
+        <p>This project empirically studies the effects of guidance scale on the generated samples. We trained a classifier to predict the label given the generated sample and used the accuracy of the classifier as a proxy for sample correctness.</p>
+
+        <hr class="mb-8 mt-8">
+
+        <p>Read the full writeup <a href="https://www.mattm.site/guidance-scale-effects.pdf" target="_blank" class="text-blue-700 underline">here</a>.</p>
+
+        <p>Github repo <a href="https://github.com/matt-mcwilliams/mnist-diffusion-cfg-analysis" target="_blank" class="text-blue-700 underline">here</a>.</p>
+
+
+        <div class="max-w-3xl mx-auto h-96"></div>
+
+</body>
+
+</html>

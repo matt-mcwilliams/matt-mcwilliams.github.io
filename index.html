@@ -5,7 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
         <link rel="icon" type="image/x-icon" href="/icon.png">
-        <title>Matthew McWilliams</title>
+        <title>Matt McWilliams</title>
         <style type="text/tailwindcss">
                 @theme {
                         --color-coral-red: #ff4e50;
@@ -13,7 +13,7 @@
         </style>
 </head>
 <body class="pt-8">
-        <h1 class="text-4xl font-bold max-w-3xl mx-auto text-center mb-2">Matthew McWilliams</h1>
+        <h1 class="text-4xl font-bold max-w-3xl mx-auto text-center mb-2">Matt McWilliams</h1>
         <p class="max-w-3xl mx-auto text-center">Projects and Blog</p>
         <p class="max-w-3xl mx-auto text-center mb-6 "></p>
         <div class="max-w-3xl mx-auto grid grid-cols-2 gap-12 mb-16">
@@ -23,7 +23,7 @@
                 </div>
                 <div class="h-64 self-center">
                         <p class="text-xl mb-6">Hello there!</p>
-                        <p class="text-xl mb-6">My name is Matthew McWilliams. </p>
+                        <p class="text-xl mb-6">My name is Matt McWilliams. </p>
                         <p class="text-xl mb-6">I'm a dreamer.</p>
                         <p class="text-xl mb-6">I'm also a programmer, designer, reader, writer, tinkerer, builder, student, athlete, thinker, truth-seeker, and friend.</p>
                         
@@ -34,11 +34,32 @@
                 </div>
         </div>
         <hr class="mb-12 max-w-3xl mx-auto">
-        <div class="max-w-3xl mx-auto grid grid-cols-2 align-top mb-6 gap-x-12 gap-y-2">
-                <button class="block text-center text-xl border-b-coral-red transition cursor-pointer py-4 border-b-0 hover:border-b-4" id="projects-toggle" onclick="toggleProjects()">Projects</p>
-                <button class="block text-center text-xl border-b-coral-red transition cursor-pointer py-4 border-b-0 hover:border-b-4" id="blog-toggle" onclick="toggleBlog()">Essays</p>
-        </div>
+        <h2 class="font-bold text-xl text-center mb-8">Projects and Writing</h2>
         <div class="max-w-3xl mx-auto" id="projects">
+                <div class="mb-8">
+                        <div class="flex justify-between gap-8">
+                                <a href="./blog/guidance-scale-effects.html" class="block text-coral-red underline font-bold text-lg">Guidance Scale Effects</a>
+                                
+                                <div class="flex gap-3 my-1">
+                                        <div class="bg-red-200 px-4 text-sm rounded-4xl">AI</div>
+                                        <div class="bg-purple-200 px-4 text-sm rounded-4xl">Writeup</div>
+                                        <div class="bg-gray-200 px-4 text-sm rounded-4xl">December 2025</div>
+                                </div>
+                        </div>
+                        <p class="line-clamp-3 ">This project seeks to understand the effects of guidance scale on classifier-free sampling of conditional diffusion models. We trained a conditioned UNET diffusion model on the MNIST dataset and sampled using classifier-free guidance. Classifier-free guidance is essential for modern image generation diffusion models, allowing label-dependent features become more prominant simply by changing a variable, the guidance scale.</p>
+                </div>
+                <div class="mb-8">
+                        <div class="flex justify-between gap-8">
+                                <a href="./blog/lemma-craft.html" class="block text-coral-red underline font-bold text-lg">LemmaCraft</a>
+                                
+                                <div class="flex gap-3 my-1">
+                                        <div class="bg-red-200 px-4 text-sm rounded-4xl">Math</div>
+                                        <div class="bg-purple-200 px-4 text-sm rounded-4xl">Writeup</div>
+                                        <div class="bg-gray-200 px-4 text-sm rounded-4xl">December 2025</div>
+                                </div>
+                        </div>
+                        <p class="line-clamp-3 ">LemmaCraft is a visual math proof engine with a custom parser and internal mathematical model. It allows its users to derive Peano-arithmetic results from only a few axioms. It consists of four chapters designed to teach users the software and introduce key lemmas: a tutorial chapter followed by three chapters that each cover a new mathematical domain: addition, multiplication, and exponentiation. In each chapter, players prove progressively more challenging lemmas about basic operations.</p>
+                </div>
                 <div class=" px-8 py-8 min-h-120 flex flex-col rounded-3xl bg-[#0B0F11] text-white mb-8">
                         <h3 class="font-bold text-3xl mb-4 ">LemmaCraft</h3>
                         <div class="grid grid-cols-4 gap-x-6 h-fit items-stretch min-h-0">
@@ -60,68 +81,10 @@
                         </div>
                 </div>
         </div>
-        <div class="max-w-3xl mx-auto hidden my-8" id="essays">
-                <img src="./imgs/writing-quote.png" alt="" class="rounded-3xl mb-16">
-                <div class="mb-8">
-                        <div class="flex justify-between gap-8">
-                                <a href="./blog/lemma-craft.html" class="block text-coral-red underline font-bold text-lg">LemmaCraft</a>
-                                
-                                <div class="flex gap-3 my-1">
-                                        <div class="bg-purple-200 px-4 text-sm rounded-4xl">Writeup</div>
-                                        <div class="bg-gray-200 px-4 text-sm rounded-4xl">December 2025</div>
-                                </div>
-                        </div>
-                        <p class="line-clamp-2 ">LemmaCraft is a visual math proof engine with a custom parser and internal mathematical model. It allows its users to derive Peano-arithmetic results from only a few axioms. It consists of four chapters designed to teach users the software and introduce key lemmas: a tutorial chapter followed by three chapters that each cover a new mathematical domain: addition, multiplication, and exponentiation. In each chapter, players prove progressively more challenging lemmas about basic operations.</p>
-                </div>
-        </div>
 
         
-        <div class="max-w-3xl mx-auto h-96">
-
-        </div>
-
-        <script>
-                const projectsToggle = document.getElementById('projects-toggle')
-                const blogToggle = document.getElementById('blog-toggle')
-                const projectsEl = document.getElementById('projects')
-                const blogEl = document.getElementById('essays')
-
-                function toggleProjects() {
-                        projectsToggle.classList.add('border-b-4')
-                        projectsToggle.classList.add('font-bold')
-                        projectsToggle.classList.add('bg-gray-200')
-                        projectsToggle.classList.remove('border-b-0')
-                        projectsEl.classList.remove('hidden')
-                        blogToggle.classList.remove('border-b-4')
-                        blogToggle.classList.remove('font-bold')
-                        blogToggle.classList.remove('bg-gray-200')
-                        blogToggle.classList.add('border-b-0')
-                        blogEl.classList.add('hidden')
-
-                        window.localStorage.setItem('toggle', 'projects')
-                }
-                
-                function toggleBlog() {
-                        blogToggle.classList.add('border-b-4')
-                        blogToggle.classList.add('font-bold')
-                        blogToggle.classList.add('bg-gray-200')
-                        blogToggle.classList.remove('border-b-0')
-                        blogEl.classList.remove('hidden')
-                        projectsToggle.classList.remove('border-b-4')
-                        projectsToggle.classList.remove('font-bold')
-                        projectsToggle.classList.remove('bg-gray-200')
-                        projectsToggle.classList.add('border-b-0')
-                        projectsEl.classList.add('hidden')
-
-                        window.localStorage.setItem('toggle', 'blog')
-                }
-
-                if (window.localStorage.getItem('toggle') == 'blog') {
-                        toggleBlog()
-                } else {
-                        toggleProjects()
-                }
-        </script>
+        <div class="max-w-3xl mx-auto h-96"></div>
+        
         <script>
                 // Match the right portraits column height to the left LemmaCraft image.
                 (function(){
