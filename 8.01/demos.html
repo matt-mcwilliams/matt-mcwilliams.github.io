@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+        <title>DEMOS</title>
+        <link rel="icon" type="image/x-icon" href="/icon.png">
+        <style type="text/tailwindcss">
+                @theme {
+                        --color-coral-red: #ff4e50;
+                }
+
+                h1 {
+                        font-size: 32pt;
+                        font-weight: bold;
+                        text-align: center;
+                }
+
+                h2 {
+                        font-size: 16pt;
+                        font-weight: bold;
+                        margin-bottom: 12pt;
+                        margin-top: 24pt;
+                }
+
+                h3 {
+                        font-size: 14pt;
+                        font-weight:bold;
+                        margin-top: 16pt;
+                }
+
+                h4 {
+                        font-size: 14pt;
+                        font-weight:bold;
+                        color: var(--color-coral-red);
+                        margin-top: 16pt;
+                }
+
+                h5 {
+                        font-size: 12pt;
+                        font-weight: bold;
+                        color: darkslategray;
+                        margin-top: 16pt;
+                }
+
+                h6 {
+                        font-size: 12pt;
+                        font-weight: bold;
+                        font-style: italic;
+                        color: darkslategray;
+                        margin-top: 16pt;
+                }
+                
+                body {
+                        line-height: 2;
+                        text-align: justify;
+                }
+                
+                p {
+                        margin-bottom: 12pt;
+                }
+
+                ul {
+                        list-style: disc;
+                        margin-left: 16pt;
+                        margin-bottom: 12pt;
+                }
+
+                code {
+                        background-color: lightgray;
+                        padding: 3px 8px;
+                        white-space: nowrap;
+                        border-radius: 5pt;
+                        letter-spacing: 0.05em;
+                }
+
+                img {
+                        margin-bottom: 12pt;
+                }
+
+                #title-hr {
+                        border-color: var(--color-coral-red);
+                        border-width: 3pt;
+                        border-radius: 100pt;
+                        margin-bottom: 28pt;
+                }
+        </style>
+</head>
+
+<body class="py-16 max-w-xl mx-auto">
+        <a href="/" class="fixed top-4 left-4 text-2xl bg-gray-200 hover:bg-gray-300 w-14 h-14 pt-2 font-bold text-center rounded-full transition duration-300 z-50">
+                ←
+        </a>
+        <h1 id="lemmacraft" class="mb-8">Demos</h1>
+        <div class="flex gap-8 justify-between mb-3">
+                <div class="flex gap-4">
+                        <div class="bg-purple-200 px-4 py-1 text-sm rounded-4xl">Writeup</div>
+                        <div class="bg-red-200 px-4 py-1 text-sm rounded-4xl">Math</div>
+
+                </div>
+                <div class="bg-gray-200 px-4 py-1 text-sm rounded-4xl">December 2025</div>
+        </div>
+        <hr id="title-hr">
+
+        <h2>1 - Simple Collision</h2>
+        
+        <div class="grid justify-between grid-cols-6 mb-4 gap-3">
+
+                <label for="m1" class="flex font-bold w-full">Mass 1: </label>
+                <input id="m1" class="block ml-3" type="number" min="1" max="1000" oninput="cd_updateValues({mass1:parseInt(this.value)})" value="100">
+
+                <label for="m2" class="flex font-bold w-full">Mass 2: </label>
+                <input id="m2" class="block ml-3" type="number" min="1" max="1000" oninput="cd_updateValues({mass2:parseInt(this.value)})" value="30">
+
+                <label for="m2" class="flex font-bold w-full">Elastic: </label>
+                <input id="m2" class="block ml-3" type="checkbox" checked="true" oninput="cd_updateValues({elasticCollision:this.checked})">
+                
+                <label for="v1" class="flex font-bold w-full">Velocity 1: </label>
+                <input id="v1" class="block ml-3" type="number" oninput="cd_updateValues({velocity1:parseInt(this.value)})" value="10">
+
+                <label for="v2" class="flex font-bold w-full">Velocity 2: </label>
+                <input id="v2" class="block ml-3" type="number" oninput="cd_updateValues({velocity2:parseInt(this.value)})" value="0">
+
+                <button class="col-start-5 col-span-2 cursor-pointer bg-gray-300 rounded" onclick="
+                        (this.innerText=='Restart' ?
+                        ()=>{cd_reset(); this.innerText='Start'}:()=>{cd_start(); this.innerText='Restart'}
+                        )()">Start</button>
+
+        </div>
+        <canvas class="border-2 rounded bg-purple-50" id="collision-demo-canvas" width="800" height="400"></canvas>
+
+        <script>
+
+        const canvas = document.getElementById("collision-demo-canvas");
+        const ctx = canvas.getContext("2d");
+
+        const CD_ASPECT_RATIO = 0.5
+
+        function resize() {
+                canvas.width = canvas.parentElement.clientWidth;
+                canvas.height = canvas.width * CD_ASPECT_RATIO; // maintain aspect ratio
+        }
+        window.addEventListener("resize", resize);
+        resize();
+
+        const CD_BOUNDS = {
+                xBound1: 0, xBound2: 0, yBound1: 0, yBound2: 0
+        }
+
+        let started = false
+
+        let defaultValues = {
+                mass1: 100,
+                mass2: 30,
+                velocity1: 10,
+                velocity2: 0,
+                elasticCollision: true,
+        }
+
+        function recalculateBounds(bounds, xList, yList, aspectRatio) {
+                bounds.xBound1 = Math.min(...xList)
+                bounds.xBound2 = Math.max(...xList)
+                bounds.yBound1 = Math.max(...yList)
+                bounds.yBound2 = Math.min(...yList)
+
+                let difference = ((bounds.xBound2 - bounds.xBound1)*aspectRatio) - (bounds.yBound1-bounds.yBound2)
+                if (difference < 0) { // not wide enough
+                        bounds.xBound1 += (difference*aspectRatio) / 2
+                        bounds.xBound2 -= (difference*aspectRatio) / 2
+                } else {
+                        bounds.yBound2 -= difference / 2
+                        bounds.yBound1 += difference / 2
+                }
+        }
+
+        function ltc(bounds, x,y) { // local to canvas
+                return [
+                        (x - bounds.xBound1) / (bounds.xBound2-bounds.xBound1) * canvas.width,
+                        (y - bounds.yBound1) / (bounds.yBound2-bounds.yBound1) * canvas.height
+                ]
+        }
+
+        function cd_reset() {
+
+                started = false
+
+                elasticCollision = defaultValues.elasticCollision
+
+                mass1 = defaultValues.mass1
+                mass2 = defaultValues.mass2
+
+                velocity1 = defaultValues.velocity1
+                velocity2 = defaultValues.velocity2
+
+                x1 = -10
+                x2 =  10
+
+                width1 = Math.cbrt(mass1)*3
+                width2 = Math.cbrt(mass2)*3
+
+                const collisionX = velocity1 * (20 / (velocity1 - velocity2)) - 10
+                const momentum1 = velocity1 * mass1
+                const momentum2 = velocity2 * mass2
+                const totalMomentum = momentum1 + momentum2
+                const velocityOfCenterOfMass = totalMomentum / (mass1 + mass2)
+                let postCollisionVelocity1 = velocityOfCenterOfMass
+                let postCollisionVelocity2 = velocityOfCenterOfMass
+                if (elasticCollision) {
+                        const relativeVelocity = velocity1 - velocity2
+                        postCollisionVelocity2 = (2 * relativeVelocity / ((mass2 / mass1) + 1))
+                        postCollisionVelocity1 = (relativeVelocity - (mass2 / mass1) * postCollisionVelocity2) + velocity2
+                        postCollisionVelocity2 += velocity2
+                }
+
+                recalculateBounds(
+                        CD_BOUNDS,
+                        [x1-width1-1, x2+width2+1, x1-width1-1+velocity1*5, x2+width2+1+velocity2*5, collisionX+postCollisionVelocity1*5-width1-1, collisionX+postCollisionVelocity2*5+width2+1],
+                        [-1, Math.max(width1, width2)+2],
+                        CD_ASPECT_RATIO
+                )
+        }
+
+        function cd_start() {
+                started = true
+        }
+
+        let cd_momentum1 = 0
+        let cd_momentum2 = 0
+        let cd_totalMomentum = 0
+
+        function cd_updatePhysics() {
+                // UPDATE PHYSICS
+                x1 += velocity1 / 60
+                x2 += velocity2 / 60
+
+                cd_momentum1 = velocity1 * mass1
+                cd_momentum2 = velocity2 * mass2
+                cd_totalMomentum = cd_momentum1 + cd_momentum2
+                
+                if (x2 < x1) {
+                        const velocityOfCenterOfMass = cd_totalMomentum / (mass1 + mass2)
+                        if (elasticCollision) {
+                                const relativeVelocity = velocity1 - velocity2
+                                const preCollisionVelocity2 = velocity2
+                                velocity2 = (2 * relativeVelocity / ((mass2 / mass1) + 1))
+                                velocity1 = (relativeVelocity - (mass2 / mass1) * velocity2) + preCollisionVelocity2
+                                velocity2 += preCollisionVelocity2
+                        } else {
+                                velocity1 = velocityOfCenterOfMass
+                                velocity2 = velocityOfCenterOfMass
+                        }
+                        x1 = x2
+                }
+        }
+
+        function cd_redrawCanvas() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                groundHeight = ltc(CD_BOUNDS,0,0)[1]
+                ctx.fillStyle = '#ddd'
+                ctx.fillRect(canvas.width * 2/100, groundHeight, canvas.width * 96/100, (canvas.height - canvas.width * 2/100) - groundHeight)
+                
+                ctx.fillStyle = '#000'
+                ctx.fillText(`Total Momentum: ${Math.round(cd_totalMomentum)}`, canvas.width * 0.8, canvas.height * 0.1)
+                ctx.fillText(`Red Momentum: ${Math.round(cd_momentum1)}`, canvas.width * 0.8, canvas.height * 0.17)
+                ctx.fillText(`Blue Momentum: ${Math.round(cd_momentum2)}`, canvas.width * 0.8, canvas.height * 0.22)
+                
+                ctx.lineWidth = 2
+                ctx.strokeStyle = 'black'
+                ctx.lineCap = 'round'
+
+                
+                // Draw Ground
+                ctx.beginPath()
+                ctx.moveTo(canvas.width * 2/100, groundHeight)
+                ctx.lineTo(canvas.width * 98/100, groundHeight)
+                ctx.stroke()
+                ctx.closePath()
+
+                
+                // Draw Car 1
+                // Draw Wheels
+                const wheelHeight = ltc(CD_BOUNDS,0,1)[1]
+                const wheelDistFromEdge = 0.25
+                ctx.lineWidth = 1
+                ctx.fillStyle = '#fdd'
+                ctx.beginPath()
+                ctx.arc(ltc(CD_BOUNDS,x1 - width1 * (1-wheelDistFromEdge),0)[0], 
+                        wheelHeight, 
+                        groundHeight-wheelHeight, 0, Math.PI*2)
+                ctx.fill()
+                ctx.stroke()
+                ctx.closePath()
+
+                ctx.beginPath()
+                ctx.arc(ltc(CD_BOUNDS,x1 - width1 * wheelDistFromEdge,0)[0], 
+                        wheelHeight, 
+                        groundHeight-wheelHeight, 0, Math.PI*2)
+                ctx.fill()
+                ctx.stroke()
+                ctx.closePath()
+
+                // Draw body
+                ctx.fillStyle = '#e77'
+                let topLeftBound1 = ltc(CD_BOUNDS,x1 - width1, 2 + width1*(3/4))
+                let bottomRightBound1 = ltc(CD_BOUNDS,x1, 2)
+                ctx.fillRect(topLeftBound1[0], 
+                        topLeftBound1[1], 
+                        bottomRightBound1[0]-topLeftBound1[0],
+                        bottomRightBound1[1]-topLeftBound1[1])
+                ctx.strokeRect(topLeftBound1[0], 
+                        topLeftBound1[1], 
+                        bottomRightBound1[0]-topLeftBound1[0],
+                        bottomRightBound1[1]-topLeftBound1[1])
+
+                
+                // Draw Car 2
+                // Draw Wheels
+                ctx.lineWidth = 1
+                ctx.fillStyle = '#ddf'
+                ctx.beginPath()
+                ctx.arc(ltc(CD_BOUNDS,x2 + width2 * (1-wheelDistFromEdge),0)[0], 
+                        wheelHeight, 
+                        groundHeight-wheelHeight, 0, Math.PI*2)
+                ctx.fill()
+                ctx.stroke()
+                ctx.closePath()
+
+                ctx.beginPath()
+                ctx.arc(ltc(CD_BOUNDS,x2 + width2 * wheelDistFromEdge,0)[0], 
+                        wheelHeight, 
+                        groundHeight-wheelHeight, 0, Math.PI*2)
+                ctx.fill()
+                ctx.stroke()
+                ctx.closePath()
+
+                // Draw body
+                ctx.fillStyle = '#77e'
+                let topLeftBound2 = ltc(CD_BOUNDS,x2 + width2, 2 + width2*(3/4))
+                let bottomRightBound2 = ltc(CD_BOUNDS,x2, 2)
+                ctx.fillRect(topLeftBound2[0], 
+                        topLeftBound2[1], 
+                        bottomRightBound2[0]-topLeftBound2[0],
+                        bottomRightBound2[1]-topLeftBound2[1])
+                ctx.strokeRect(topLeftBound2[0], 
+                        topLeftBound2[1], 
+                        bottomRightBound2[0]-topLeftBound2[0],
+                        bottomRightBound2[1]-topLeftBound2[1])
+
+                // Draw Velocity Vector 1
+                const center1 = ltc(CD_BOUNDS,x1 - width1/2, width1*(3/4)/2 + 2)
+                const target1 = ltc(CD_BOUNDS,x1 - width1/2 + velocity1, width1*(3/4)/2 + 2)
+                ctx.beginPath()
+                ctx.moveTo(center1[0], center1[1])
+                ctx.lineTo(target1[0], target1[1])
+                ctx.lineTo(target1[0] - 5 * Math.sign(velocity1), target1[1] -5)
+                ctx.moveTo(target1[0], target1[1])
+                ctx.lineTo(target1[0] - 5 * Math.sign(velocity1), target1[1] +5)
+                ctx.stroke()
+                ctx.closePath()
+
+                // Draw Velocity Vector 2
+                const center2 = ltc(CD_BOUNDS,x2 + width2/2, width2*(3/4)/2 + 2)
+                const target2 = ltc(CD_BOUNDS,x2 + width2/2 + velocity2, width2*(3/4)/2 + 2)
+                ctx.beginPath()
+                ctx.moveTo(center2[0], center2[1])
+                ctx.lineTo(target2[0], target2[1])
+                ctx.lineTo(target2[0] - 5 * Math.sign(velocity2), target2[1] -5)
+                ctx.moveTo(target2[0], target2[1])
+                ctx.lineTo(target2[0] - 5 * Math.sign(velocity2), target2[1] +5)
+                ctx.stroke()
+                ctx.closePath()
+
+        }
+
+        function cd_updateValues(newValues){
+                console.log(newValues)
+                defaultValues = {
+                        ...defaultValues,
+                        ...newValues
+                }
+                cd_reset()
+        }
+
+        cd_reset()
+
+        function cd_draw() {
+                if (started) {
+                        cd_updatePhysics()
+                }
+
+                cd_redrawCanvas()
+
+                requestAnimationFrame(cd_draw);
+        }
+
+        cd_draw();
+        </script>
+        
+
+        
+
+</body>
+
+</html>
