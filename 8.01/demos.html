@@ -104,6 +104,49 @@
         </div>
         <hr id="title-hr">
 
+        <!-- Reusable Functions -->
+        <script>
+
+        function resize(canvas) {
+                canvas.width = canvas.parentElement.clientWidth;
+                canvas.height = canvas.width * CD_ASPECT_RATIO; // maintain aspect ratio
+        }
+                
+        function recalculateBounds(bounds, xList, yList, aspectRatio) {
+                bounds.xBound1 = Math.min(...xList)
+                bounds.xBound2 = Math.max(...xList)
+                bounds.yBound1 = Math.max(...yList)
+                bounds.yBound2 = Math.min(...yList)
+
+                let difference = ((bounds.xBound2 - bounds.xBound1)*aspectRatio) - (bounds.yBound1-bounds.yBound2)
+                if (difference < 0) { // not wide enough
+                        bounds.xBound1 += difference / (2*aspectRatio)
+                        bounds.xBound2 -= difference / (2*aspectRatio)
+                } else {
+                        bounds.yBound2 -= difference / 2
+                        bounds.yBound1 += difference / 2
+                }
+        }
+
+        function ltc(bounds, x, y) { // local to canvas
+                return [
+                        (x - bounds.xBound1) / (bounds.xBound2-bounds.xBound1) * cd_canvas.width,
+                        (y - bounds.yBound1) / (bounds.yBound2-bounds.yBound1) * cd_canvas.height
+                ]
+        }
+
+        function ctl(bounds, x, y) { // canvas to local
+                return [
+                        x/(cd_canvas.width)*(bounds.xBound2-bounds.xBound1) + bounds.xBound1,
+                        y/(cd_canvas.height)*(bounds.yBound2-bounds.yBound1) + bounds.yBound1,
+                ]
+        }
+
+        </script>
+
+
+
+
         <h2>1 - Simple Collision</h2>
         
         <div class="grid justify-between grid-cols-6 mb-4 gap-3">
@@ -129,29 +172,26 @@
                         )()">Start</button>
 
         </div>
+
         <canvas class="border-2 rounded bg-purple-50" id="collision-demo-canvas" width="800" height="400"></canvas>
 
         <script>
 
-        const canvas = document.getElementById("collision-demo-canvas");
-        const ctx = canvas.getContext("2d");
+        const cd_canvas = document.getElementById("collision-demo-canvas");
+        const cd_ctx = cd_canvas.getContext("2d");
 
         const CD_ASPECT_RATIO = 0.5
-
-        function resize() {
-                canvas.width = canvas.parentElement.clientWidth;
-                canvas.height = canvas.width * CD_ASPECT_RATIO; // maintain aspect ratio
-        }
-        window.addEventListener("resize", resize);
-        resize();
+        
+        window.addEventListener("resize", () => resize(cd_canvas));
+        resize(cd_canvas);
 
         const CD_BOUNDS = {
                 xBound1: 0, xBound2: 0, yBound1: 0, yBound2: 0
         }
 
-        let started = false
+        let cd_started = false
 
-        let defaultValues = {
+        let cd_values = {
                 mass1: 100,
                 mass2: 30,
                 velocity1: 10,
@@ -159,40 +199,17 @@
                 elasticCollision: true,
         }
 
-        function recalculateBounds(bounds, xList, yList, aspectRatio) {
-                bounds.xBound1 = Math.min(...xList)
-                bounds.xBound2 = Math.max(...xList)
-                bounds.yBound1 = Math.max(...yList)
-                bounds.yBound2 = Math.min(...yList)
-
-                let difference = ((bounds.xBound2 - bounds.xBound1)*aspectRatio) - (bounds.yBound1-bounds.yBound2)
-                if (difference < 0) { // not wide enough
-                        bounds.xBound1 += (difference*aspectRatio) / 2
-                        bounds.xBound2 -= (difference*aspectRatio) / 2
-                } else {
-                        bounds.yBound2 -= difference / 2
-                        bounds.yBound1 += difference / 2
-                }
-        }
-
-        function ltc(bounds, x,y) { // local to canvas
-                return [
-                        (x - bounds.xBound1) / (bounds.xBound2-bounds.xBound1) * canvas.width,
-                        (y - bounds.yBound1) / (bounds.yBound2-bounds.yBound1) * canvas.height
-                ]
-        }
-
         function cd_reset() {
 
-                started = false
+                cd_started = false
 
-                elasticCollision = defaultValues.elasticCollision
+                elasticCollision = cd_values.elasticCollision
 
-                mass1 = defaultValues.mass1
-                mass2 = defaultValues.mass2
+                mass1 = cd_values.mass1
+                mass2 = cd_values.mass2
 
-                velocity1 = defaultValues.velocity1
-                velocity2 = defaultValues.velocity2
+                velocity1 = cd_values.velocity1
+                velocity2 = cd_values.velocity2
 
                 x1 = -10
                 x2 =  10
@@ -223,7 +240,7 @@
         }
 
         function cd_start() {
-                started = true
+                cd_started = true
         }
 
         let cd_momentum1 = 0
@@ -256,60 +273,60 @@
         }
 
         function cd_redrawCanvas() {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                cd_ctx.clearRect(0, 0, cd_canvas.width, cd_canvas.height);
                 groundHeight = ltc(CD_BOUNDS,0,0)[1]
-                ctx.fillStyle = '#ddd'
-                ctx.fillRect(canvas.width * 2/100, groundHeight, canvas.width * 96/100, (canvas.height - canvas.width * 2/100) - groundHeight)
+                cd_ctx.fillStyle = '#ddd'
+                cd_ctx.fillRect(cd_canvas.width * 2/100, groundHeight, cd_canvas.width * 96/100, (cd_canvas.height - cd_canvas.width * 2/100) - groundHeight)
                 
-                ctx.fillStyle = '#000'
-                ctx.fillText(`Total Momentum: ${Math.round(cd_totalMomentum)}`, canvas.width * 0.8, canvas.height * 0.1)
-                ctx.fillText(`Red Momentum: ${Math.round(cd_momentum1)}`, canvas.width * 0.8, canvas.height * 0.17)
-                ctx.fillText(`Blue Momentum: ${Math.round(cd_momentum2)}`, canvas.width * 0.8, canvas.height * 0.22)
+                cd_ctx.fillStyle = '#000'
+                cd_ctx.fillText(`Total Momentum: ${Math.round(cd_totalMomentum)}`, cd_canvas.width * 0.8, cd_canvas.height * 0.1)
+                cd_ctx.fillText(`Red Momentum: ${Math.round(cd_momentum1)}`, cd_canvas.width * 0.8, cd_canvas.height * 0.17)
+                cd_ctx.fillText(`Blue Momentum: ${Math.round(cd_momentum2)}`, cd_canvas.width * 0.8, cd_canvas.height * 0.22)
                 
-                ctx.lineWidth = 2
-                ctx.strokeStyle = 'black'
-                ctx.lineCap = 'round'
+                cd_ctx.lineWidth = 2
+                cd_ctx.strokeStyle = 'black'
+                cd_ctx.lineCap = 'round'
 
                 
                 // Draw Ground
-                ctx.beginPath()
-                ctx.moveTo(canvas.width * 2/100, groundHeight)
-                ctx.lineTo(canvas.width * 98/100, groundHeight)
-                ctx.stroke()
-                ctx.closePath()
+                cd_ctx.beginPath()
+                cd_ctx.moveTo(cd_canvas.width * 2/100, groundHeight)
+                cd_ctx.lineTo(cd_canvas.width * 98/100, groundHeight)
+                cd_ctx.stroke()
+                cd_ctx.closePath()
 
                 
                 // Draw Car 1
                 // Draw Wheels
                 const wheelHeight = ltc(CD_BOUNDS,0,1)[1]
                 const wheelDistFromEdge = 0.25
-                ctx.lineWidth = 1
-                ctx.fillStyle = '#fdd'
-                ctx.beginPath()
-                ctx.arc(ltc(CD_BOUNDS,x1 - width1 * (1-wheelDistFromEdge),0)[0], 
+                cd_ctx.lineWidth = 1
+                cd_ctx.fillStyle = '#fdd'
+                cd_ctx.beginPath()
+                cd_ctx.arc(ltc(CD_BOUNDS,x1 - width1 * (1-wheelDistFromEdge),0)[0], 
                         wheelHeight, 
                         groundHeight-wheelHeight, 0, Math.PI*2)
-                ctx.fill()
-                ctx.stroke()
-                ctx.closePath()
+                cd_ctx.fill()
+                cd_ctx.stroke()
+                cd_ctx.closePath()
 
-                ctx.beginPath()
-                ctx.arc(ltc(CD_BOUNDS,x1 - width1 * wheelDistFromEdge,0)[0], 
+                cd_ctx.beginPath()
+                cd_ctx.arc(ltc(CD_BOUNDS,x1 - width1 * wheelDistFromEdge,0)[0], 
                         wheelHeight, 
                         groundHeight-wheelHeight, 0, Math.PI*2)
-                ctx.fill()
-                ctx.stroke()
-                ctx.closePath()
+                cd_ctx.fill()
+                cd_ctx.stroke()
+                cd_ctx.closePath()
 
                 // Draw body
-                ctx.fillStyle = '#e77'
+                cd_ctx.fillStyle = '#e77'
                 let topLeftBound1 = ltc(CD_BOUNDS,x1 - width1, 2 + width1*(3/4))
                 let bottomRightBound1 = ltc(CD_BOUNDS,x1, 2)
-                ctx.fillRect(topLeftBound1[0], 
+                cd_ctx.fillRect(topLeftBound1[0], 
                         topLeftBound1[1], 
                         bottomRightBound1[0]-topLeftBound1[0],
                         bottomRightBound1[1]-topLeftBound1[1])
-                ctx.strokeRect(topLeftBound1[0], 
+                cd_ctx.strokeRect(topLeftBound1[0], 
                         topLeftBound1[1], 
                         bottomRightBound1[0]-topLeftBound1[0],
                         bottomRightBound1[1]-topLeftBound1[1])
@@ -317,33 +334,33 @@
                 
                 // Draw Car 2
                 // Draw Wheels
-                ctx.lineWidth = 1
-                ctx.fillStyle = '#ddf'
-                ctx.beginPath()
-                ctx.arc(ltc(CD_BOUNDS,x2 + width2 * (1-wheelDistFromEdge),0)[0], 
+                cd_ctx.lineWidth = 1
+                cd_ctx.fillStyle = '#ddf'
+                cd_ctx.beginPath()
+                cd_ctx.arc(ltc(CD_BOUNDS,x2 + width2 * (1-wheelDistFromEdge),0)[0], 
                         wheelHeight, 
                         groundHeight-wheelHeight, 0, Math.PI*2)
-                ctx.fill()
-                ctx.stroke()
-                ctx.closePath()
+                cd_ctx.fill()
+                cd_ctx.stroke()
+                cd_ctx.closePath()
 
-                ctx.beginPath()
-                ctx.arc(ltc(CD_BOUNDS,x2 + width2 * wheelDistFromEdge,0)[0], 
+                cd_ctx.beginPath()
+                cd_ctx.arc(ltc(CD_BOUNDS,x2 + width2 * wheelDistFromEdge,0)[0], 
                         wheelHeight, 
                         groundHeight-wheelHeight, 0, Math.PI*2)
-                ctx.fill()
-                ctx.stroke()
-                ctx.closePath()
+                cd_ctx.fill()
+                cd_ctx.stroke()
+                cd_ctx.closePath()
 
                 // Draw body
-                ctx.fillStyle = '#77e'
+                cd_ctx.fillStyle = '#77e'
                 let topLeftBound2 = ltc(CD_BOUNDS,x2 + width2, 2 + width2*(3/4))
                 let bottomRightBound2 = ltc(CD_BOUNDS,x2, 2)
-                ctx.fillRect(topLeftBound2[0], 
+                cd_ctx.fillRect(topLeftBound2[0], 
                         topLeftBound2[1], 
                         bottomRightBound2[0]-topLeftBound2[0],
                         bottomRightBound2[1]-topLeftBound2[1])
-                ctx.strokeRect(topLeftBound2[0], 
+                cd_ctx.strokeRect(topLeftBound2[0], 
                         topLeftBound2[1], 
                         bottomRightBound2[0]-topLeftBound2[0],
                         bottomRightBound2[1]-topLeftBound2[1])
@@ -351,33 +368,33 @@
                 // Draw Velocity Vector 1
                 const center1 = ltc(CD_BOUNDS,x1 - width1/2, width1*(3/4)/2 + 2)
                 const target1 = ltc(CD_BOUNDS,x1 - width1/2 + velocity1, width1*(3/4)/2 + 2)
-                ctx.beginPath()
-                ctx.moveTo(center1[0], center1[1])
-                ctx.lineTo(target1[0], target1[1])
-                ctx.lineTo(target1[0] - 5 * Math.sign(velocity1), target1[1] -5)
-                ctx.moveTo(target1[0], target1[1])
-                ctx.lineTo(target1[0] - 5 * Math.sign(velocity1), target1[1] +5)
-                ctx.stroke()
-                ctx.closePath()
+                cd_ctx.beginPath()
+                cd_ctx.moveTo(center1[0], center1[1])
+                cd_ctx.lineTo(target1[0], target1[1])
+                cd_ctx.lineTo(target1[0] - 5 * Math.sign(velocity1), target1[1] -5)
+                cd_ctx.moveTo(target1[0], target1[1])
+                cd_ctx.lineTo(target1[0] - 5 * Math.sign(velocity1), target1[1] +5)
+                cd_ctx.stroke()
+                cd_ctx.closePath()
 
                 // Draw Velocity Vector 2
                 const center2 = ltc(CD_BOUNDS,x2 + width2/2, width2*(3/4)/2 + 2)
                 const target2 = ltc(CD_BOUNDS,x2 + width2/2 + velocity2, width2*(3/4)/2 + 2)
-                ctx.beginPath()
-                ctx.moveTo(center2[0], center2[1])
-                ctx.lineTo(target2[0], target2[1])
-                ctx.lineTo(target2[0] - 5 * Math.sign(velocity2), target2[1] -5)
-                ctx.moveTo(target2[0], target2[1])
-                ctx.lineTo(target2[0] - 5 * Math.sign(velocity2), target2[1] +5)
-                ctx.stroke()
-                ctx.closePath()
+                cd_ctx.beginPath()
+                cd_ctx.moveTo(center2[0], center2[1])
+                cd_ctx.lineTo(target2[0], target2[1])
+                cd_ctx.lineTo(target2[0] - 5 * Math.sign(velocity2), target2[1] -5)
+                cd_ctx.moveTo(target2[0], target2[1])
+                cd_ctx.lineTo(target2[0] - 5 * Math.sign(velocity2), target2[1] +5)
+                cd_ctx.stroke()
+                cd_ctx.closePath()
 
         }
 
         function cd_updateValues(newValues){
                 console.log(newValues)
-                defaultValues = {
-                        ...defaultValues,
+                cd_values = {
+                        ...cd_values,
                         ...newValues
                 }
                 cd_reset()
@@ -386,7 +403,7 @@
         cd_reset()
 
         function cd_draw() {
-                if (started) {
+                if (cd_started) {
                         cd_updatePhysics()
                 }
 
@@ -398,6 +415,805 @@
         cd_draw();
         </script>
         
+
+
+
+
+
+
+        <h2>2 - Energy of a Pendulum</h2>
+
+        <div class="grid justify-between grid-cols-6 mb-4 gap-3">
+
+                <label for="a1" class="flex font-bold w-full col-span-2">Starting Angle: </label>
+                <input id="a1" class="block ml-3" type="number" min="-180" max="180" oninput="ed_updateValues({default_theta:parseInt(this.value) / 180 * Math.PI})" value="60">
+
+                <label for="a2" class="flex font-bold w-full col-span-2">Air Resistance: </label>
+                <input id="a2" class="block ml-3" type="number" min="0" max="30" oninput="ed_updateValues({air_resistance:parseInt(this.value)})" value="0">
+
+
+                <button class="col-start-5 col-span-2 cursor-pointer bg-gray-300 rounded" onclick="
+                        (this.innerText=='Restart' ?
+                        ()=>{ed_reset(); this.innerText='Start'}:()=>{ed_start(); this.innerText='Restart'}
+                        )()">Start</button>
+
+        </div>
+
+        <canvas class="border-2 rounded bg-purple-50" id="energy-demo-canvas" width="800" height="400"></canvas>
+
+        <script>
+
+        const ed_canvas = document.getElementById("energy-demo-canvas");
+        const ed_ctx = ed_canvas.getContext("2d");
+
+        const ED_ASPECT_RATIO = 0.5
+        
+        window.addEventListener("resize", () => resize(ed_canvas));
+        resize(ed_canvas);
+
+        const ED_BOUNDS = {
+                xBound1: 0, xBound2: 0, yBound1: 0, yBound2: 0
+        }
+
+        let ed_started = false
+
+        let ed_values = {
+                default_theta: 60 / 180 * Math.PI,
+                theta: 60 / 180 * Math.PI,
+                thetaVelocity: 0,
+                rodLength: 2,
+                gravity: 0.5,
+                potentialEnergy: 0,
+                kineticEnergy: 0,
+                totalEnergyWhenNoDrag: 0,
+                mass: 10,
+                air_resistance: 0,
+        }
+
+        function ed_reset() {
+
+                ed_started = false
+
+                ed_values.theta = ed_values.default_theta
+                ed_values.thetaVelocity = 0
+
+
+                const bob_location = {
+                        x: -1 + Math.sin(ed_values.theta) * ed_values.rodLength,
+                        y: 1 - Math.cos(ed_values.theta) * ed_values.rodLength
+                }
+
+                ed_values.potentialEnergy = ed_values.mass * ed_values.gravity * (bob_location.y - (1 - ed_values.rodLength))
+                ed_values.kineticEnergy = 0.5 * ed_values.mass * (ed_values.thetaVelocity * ed_values.rodLength) * (ed_values.thetaVelocity * ed_values.rodLength)
+
+                recalculateBounds(
+                        ED_BOUNDS,
+                        [2-ed_values.rodLength, 2+ed_values.rodLength],
+                        [2+ed_values.rodLength, -ed_values.rodLength],
+                        ED_ASPECT_RATIO
+                )
+        }
+
+        function ed_start() {
+                ed_values.theta = ed_values.default_theta
+                ed_values.thetaVelocity = 0
+
+                const bob_location = {
+                        x: -1 + Math.sin(ed_values.theta) * ed_values.rodLength,
+                        y: 1 - Math.cos(ed_values.theta) * ed_values.rodLength
+                }
+                
+                const potentialEnergy = ed_values.mass * ed_values.gravity * (bob_location.y - (1 - ed_values.rodLength))
+                const kineticEnergy = 0.5 * ed_values.mass * (ed_values.thetaVelocity * ed_values.rodLength) * (ed_values.thetaVelocity * ed_values.rodLength)
+
+                ed_values.totalEnergyWhenNoDrag = potentialEnergy + kineticEnergy
+
+                ed_started = true
+        }
+
+
+        function ed_updatePhysics() {
+
+                ed_values.thetaVelocity += ((ed_values.air_resistance / -30 * (ed_values.thetaVelocity * ed_values.thetaVelocity) * Math.sign(ed_values.thetaVelocity)) - (ed_values.gravity / ed_values.rodLength) * Math.sin(ed_values.theta)) / 60
+                
+                ed_values.theta += ed_values.thetaVelocity / 60
+                
+                const bob_location = {
+                        x: -1 + Math.sin(ed_values.theta) * ed_values.rodLength,
+                        y: 1 - Math.cos(ed_values.theta) * ed_values.rodLength
+                }
+
+                ed_values.potentialEnergy = ed_values.mass * ed_values.gravity * (bob_location.y - (1 - ed_values.rodLength))
+
+                if (ed_values.air_resistance != 0) {
+                        ed_values.kineticEnergy = 0.5 * ed_values.mass * (ed_values.thetaVelocity * ed_values.rodLength) * (ed_values.thetaVelocity * ed_values.rodLength)
+                } else {
+                        ed_values.kineticEnergy = Math.max(0, ed_values.totalEnergyWhenNoDrag - ed_values.potentialEnergy)
+
+                        ed_values.thetaVelocity = Math.sign(ed_values.thetaVelocity) * Math.sqrt(2 * ed_values.kineticEnergy / ed_values.mass)
+                }
+
+        }
+
+        function ed_redrawCanvas() {
+                ed_ctx.clearRect(0, 0, ed_canvas.width, ed_canvas.height);
+
+                const pivot_center = ltc(ED_BOUNDS, -1, 1)
+                const bottom_of_pivot = ltc(ED_BOUNDS, -1, 0.9)
+
+                const bob_location = {
+                        x: -1 + Math.sin(ed_values.theta) * ed_values.rodLength,
+                        y: 1 - Math.cos(ed_values.theta) * ed_values.rodLength
+                }
+                const bob_center = ltc(ED_BOUNDS, bob_location.x, bob_location.y)
+                const bottom_of_bob = ltc(ED_BOUNDS, bob_location.x, bob_location.y - 0.3)
+
+                ed_ctx.fillStyle = '#000'
+                ed_ctx.beginPath()
+                ed_ctx.arc(pivot_center[0], pivot_center[1], bottom_of_pivot[1] - pivot_center[1], 0, Math.PI * 2)
+                ed_ctx.closePath()
+                ed_ctx.fill()
+
+                ed_ctx.lineWidth = 3
+                ed_ctx.beginPath()
+                ed_ctx.moveTo(pivot_center[0], pivot_center[1])
+                ed_ctx.lineTo(bob_center[0], bob_center[1])
+                ed_ctx.closePath()
+                ed_ctx.stroke()
+
+                ed_ctx.fillStyle = '#fff'
+                ed_ctx.beginPath()
+                ed_ctx.arc(bob_center[0], bob_center[1], bottom_of_bob[1] - bob_center[1], 0, Math.PI * 2)
+                ed_ctx.closePath()
+                ed_ctx.fill()
+                ed_ctx.stroke()
+
+                // --- Energy bar chart ---
+                const totalEnergy = ed_values.potentialEnergy + ed_values.kineticEnergy;
+
+                const chartX      = ed_canvas.width  * 0.62;
+                const chartY      = ed_canvas.height * 0.08;
+                const chartW      = ed_canvas.width  * 0.32;
+                const chartH      = ed_canvas.height * 0.75;
+                const barW        = chartW * 0.22;
+                const maxEnergy   = 20;
+
+                const bars = [
+                        { label: 'PE',    value: ed_values.potentialEnergy,              color: '#e05c3a' },
+                        { label: 'KE',    value: ed_values.kineticEnergy,                color: '#3a8fe0' },
+                        { label: 'Total', value: ed_values.potentialEnergy + ed_values.kineticEnergy, color: '#2cb87a' },
+                ];
+
+                const spacing = (chartW - bars.length * barW) / (bars.length + 1);
+
+                // Axis line
+                ed_ctx.save()
+                ed_ctx.strokeStyle = '#555'
+                ed_ctx.lineWidth   = 1
+                ed_ctx.beginPath()
+                ed_ctx.moveTo(chartX, chartY)
+                ed_ctx.lineTo(chartX, chartY + chartH)
+                ed_ctx.lineTo(chartX + chartW, chartY + chartH)
+                ed_ctx.stroke()
+
+                // Y-axis ticks (0%, 50%, 100%)
+                ed_ctx.fillStyle  = '#555'
+                ed_ctx.font       = `${ed_canvas.width * 0.022}px sans-serif`
+                ed_ctx.textAlign  = 'right'
+                ed_ctx.textBaseline = 'middle'
+                for (let i = 0; i <= 2; i++) {
+                        const frac = i / 2;
+                        const ty   = chartY + chartH - frac * chartH;
+                        ed_ctx.beginPath()
+                        ed_ctx.moveTo(chartX - 4, ty)
+                        ed_ctx.lineTo(chartX,     ty)
+                        ed_ctx.stroke()
+                        ed_ctx.fillText(`${Math.round(frac * maxEnergy * 10) / 10}`, chartX - 6, ty)
+                }
+
+                // Bars
+                bars.forEach((bar, i) => {
+                        const bx = chartX + spacing + i * (barW + spacing);
+                        const barH = Math.max(0, (bar.value / maxEnergy)) * chartH;
+                        const by = chartY + chartH - barH;
+
+                        ed_ctx.fillStyle = bar.color
+                        ed_ctx.fillRect(bx, by, barW, barH)
+
+                        // Value label above bar
+                        ed_ctx.fillStyle    = '#000'
+                        ed_ctx.font         = `${ed_canvas.width * 0.022}px sans-serif`
+                        ed_ctx.textAlign    = 'center'
+                        ed_ctx.textBaseline = 'bottom'
+                        ed_ctx.fillText(
+                        `${Math.round(bar.value * 10) / 10}`,
+                        bx + barW / 2,
+                        by - 2
+                        )
+
+                        // Label below axis
+                        ed_ctx.textBaseline = 'top'
+                        ed_ctx.fillText(bar.label, bx + barW / 2, chartY + chartH + 4)
+                })
+
+                ed_ctx.restore()
+        }
+
+        function ed_updateValues(newValues){
+                console.log(newValues)
+                ed_values = {
+                        ...ed_values,
+                        ...newValues
+                }
+                ed_reset()
+        }
+
+        ed_reset()
+
+        function ed_draw() {
+                if (ed_started) {
+                        ed_updatePhysics()
+                }
+
+                ed_redrawCanvas()
+
+                requestAnimationFrame(ed_draw);
+        }
+
+        ed_draw();
+        </script>
+        
+
+
+
+
+
+
+        <h2>3 - Planetary Orbiting</h2>
+
+        <div class="grid justify-between grid-cols-6 mb-4 gap-3">
+
+                <label for="v3" class="flex font-bold w-full">Velocity: </label>
+                <input id="v3" class="block ml-3" type="number" min="0" max="100" oninput="gd_updateValues({initial_velocity:parseInt(this.value)})" value="5">
+
+                <label for="r" class="flex font-bold w-full">Distance: </label>
+                <input id="r" class="block ml-3" type="number" min="1" max="100" oninput="gd_updateValues({initial_radius:parseInt(this.value)})" value="10">
+
+                <label for="g" class="flex font-bold w-full">Gravity: </label>
+                <input id="g" class="block ml-3" type="number" min="0" max="100000" oninput="gd_updateValues({sun_gravity:parseInt(this.value)})" value="250">
+
+                <button class="col-start-5 col-span-2 cursor-pointer bg-gray-300 rounded" onclick="
+                        (this.innerText=='Restart' ?
+                        ()=>{gd_reset(); this.innerText='Start'}:()=>{gd_start(); this.innerText='Restart'}
+                        )()">Start</button>
+
+        </div>
+
+        <canvas class="border-2 rounded bg-purple-50" id="gravity-demo-canvas" width="800" height="400"></canvas>
+
+        <script>
+
+        const gd_canvas = document.getElementById("gravity-demo-canvas");
+        const gd_ctx = gd_canvas.getContext("2d");
+
+        const GD_ASPECT_RATIO = 0.5
+        
+        window.addEventListener("resize", () => resize(gd_canvas));
+        resize(gd_canvas);
+
+        const GD_BOUNDS = {
+                xBound1: 0, xBound2: 0, yBound1: 0, yBound2: 0
+        }
+
+        let gd_started = false
+
+        let gd_values = {
+                initial_radius: 10,
+                initial_velocity: 5,
+                sun_gravity: 250,
+                position: {
+                        x: 10,
+                        y: 0,
+                },
+                velocity: {
+                        x: 0,
+                        y: 1,
+                },
+                gravitational_force: {
+                        x: 0,
+                        y: 0,
+                },
+                star_locations: []
+        }
+
+        function gd_initialize() {
+                for (let i = 0; i < 100; i++) {
+                        gd_values.star_locations.push({
+                                x: Math.random() * gd_canvas.width,
+                                y: Math.random() * gd_canvas.height
+                        })
+                }
+        }
+        gd_initialize()
+        
+        function gd_reset() {
+                
+                gd_values.position.x = gd_values.initial_radius
+                gd_values.position.y = 0
+                
+                gd_values.velocity.x = 0
+                gd_values.velocity.y = gd_values.initial_velocity
+                
+                const distance = Math.sqrt((gd_values.position.x * gd_values.position.x) + (gd_values.position.y * gd_values.position.y))
+                const gravitational_force = gd_values.sun_gravity / (distance * distance)
+                
+                gd_values.gravitational_force.x = -gravitational_force * gd_values.position.x / distance
+                gd_values.gravitational_force.y = -gravitational_force * gd_values.position.y / distance
+                
+                recalculateBounds(
+                        GD_BOUNDS,
+                        [-gd_values.initial_radius * 1.5, gd_values.initial_radius * 1.5],
+                        [-gd_values.initial_radius * 1.5, gd_values.initial_radius * 1.5],
+                        GD_ASPECT_RATIO
+                )
+                
+                gd_started = false
+        }
+        
+        function gd_start() {
+                gd_started = true
+        }
+
+        function gd_updatePhysics() {
+                const distance = Math.sqrt((gd_values.position.x * gd_values.position.x) + (gd_values.position.y * gd_values.position.y))
+                const gravitational_force = gd_values.sun_gravity / (distance * distance)
+
+                gd_values.gravitational_force.x = -gravitational_force * gd_values.position.x / distance
+                gd_values.gravitational_force.y = -gravitational_force * gd_values.position.y / distance
+
+                gd_values.velocity.x += gd_values.gravitational_force.x / 60
+                gd_values.velocity.y += gd_values.gravitational_force.y / 60
+
+                gd_values.position.x += gd_values.velocity.x / 60
+                gd_values.position.y += gd_values.velocity.y / 60
+
+                for (let index = 0; index < gd_values.star_locations.length; index++) {
+                        const star = gd_values.star_locations[index];
+                        const star_speed = 5
+                        star.y += star_speed / 60
+                        star.y %= gd_canvas.height
+                }
+        }
+
+        function gd_redrawCanvas() {
+                gd_ctx.clearRect(0, 0, gd_canvas.width, gd_canvas.height);
+                gd_ctx.fillStyle = '#333'
+                gd_ctx.beginPath()
+                gd_ctx.roundRect(7, 7, gd_canvas.width-14, gd_canvas.height-14, [3])
+                gd_ctx.closePath()
+                gd_ctx.fill()
+
+                // Draw Stars
+
+                for (let index = 0; index < gd_values.star_locations.length; index++) {
+                        const star = gd_values.star_locations[index];
+                        gd_ctx.fillStyle = '#555'
+                        gd_ctx.beginPath()
+                        gd_ctx.arc(star.x, star.y, 1, 0, Math.PI*2)
+                        gd_ctx.closePath()
+                        gd_ctx.fill()
+                }
+
+                // Draw Sun
+                const sun_radius_local = 1
+                const sun_center = ltc(GD_BOUNDS, 0, 0)
+                const sun_bottom = ltc(GD_BOUNDS, 0, -sun_radius_local)
+                const sun_radius_canvas = sun_bottom[1] - sun_center[1]
+
+                gd_ctx.fillStyle = '#ee3'
+                gd_ctx.beginPath()
+                gd_ctx.arc(sun_center[0], sun_center[1], sun_radius_canvas, 0, Math.PI*2)
+                gd_ctx.closePath()
+                gd_ctx.fill()
+                
+                const planet_radius_local = 0.5
+                const planet_center = ltc(GD_BOUNDS, gd_values.position.x, gd_values.position.y)
+                const planet_bottom = ltc(GD_BOUNDS, gd_values.position.x, gd_values.position.y - planet_radius_local)
+                const planet_radius_canvas = planet_bottom[1] - planet_center[1]
+
+                // Draw Gravity Vector
+                const gravity_vector_endpoint = ltc(GD_BOUNDS, 
+                gd_values.position.x + gd_values.gravitational_force.x * 0.3, 
+                gd_values.position.y + gd_values.gravitational_force.y * 0.3)
+                const gravity_direction = [
+                        gravity_vector_endpoint[0] - planet_center[0],
+                        gravity_vector_endpoint[1] - planet_center[1]
+                ]
+                const gravity_perpendicular_direction = [
+                        -gravity_direction[1],
+                        gravity_direction[0],
+                ]
+                gd_ctx.strokeStyle = '#d22'
+                gd_ctx.lineWidth = 4
+                gd_ctx.lineCap = 'round'
+                gd_ctx.lineJoin = 'round'
+                gd_ctx.beginPath()
+                gd_ctx.moveTo(planet_center[0], planet_center[1])
+                gd_ctx.lineTo(gravity_vector_endpoint[0], gravity_vector_endpoint[1])
+                gd_ctx.lineTo(gravity_vector_endpoint[0] - gravity_direction[0] * 0.1 + gravity_perpendicular_direction[0] * 0.1, 
+                gravity_vector_endpoint[1] - gravity_direction[1] * 0.1 + gravity_perpendicular_direction[1] * 0.1)
+                gd_ctx.lineTo(gravity_vector_endpoint[0], gravity_vector_endpoint[1])
+                gd_ctx.lineTo(gravity_vector_endpoint[0] - gravity_direction[0] * 0.1 - gravity_perpendicular_direction[0] * 0.1, 
+                gravity_vector_endpoint[1] - gravity_direction[1] * 0.1 - gravity_perpendicular_direction[1] * 0.1)
+                gd_ctx.lineTo(gravity_vector_endpoint[0], gravity_vector_endpoint[1])
+                gd_ctx.closePath()
+                gd_ctx.stroke()
+
+                // Draw Velocity Vector
+                const velocity_vector_endpoint = ltc(GD_BOUNDS, 
+                gd_values.position.x + gd_values.velocity.x * 0.3, 
+                gd_values.position.y + gd_values.velocity.y * 0.3)
+                const velocity_direction = [
+                        velocity_vector_endpoint[0] - planet_center[0],
+                        velocity_vector_endpoint[1] - planet_center[1]
+                ]
+                const velocity_perpendicular_direction = [
+                        -velocity_direction[1],
+                        velocity_direction[0],
+                ]
+                gd_ctx.strokeStyle = '#22d'
+                gd_ctx.lineWidth = 4
+                gd_ctx.lineCap = 'round'
+                gd_ctx.lineJoin = 'round'
+                gd_ctx.beginPath()
+                gd_ctx.moveTo(planet_center[0], planet_center[1])
+                gd_ctx.lineTo(velocity_vector_endpoint[0], velocity_vector_endpoint[1])
+                gd_ctx.lineTo(velocity_vector_endpoint[0] - velocity_direction[0] * 0.1 + velocity_perpendicular_direction[0] * 0.1, 
+                velocity_vector_endpoint[1] - velocity_direction[1] * 0.1 + velocity_perpendicular_direction[1] * 0.1)
+                gd_ctx.lineTo(velocity_vector_endpoint[0], velocity_vector_endpoint[1])
+                gd_ctx.lineTo(velocity_vector_endpoint[0] - velocity_direction[0] * 0.1 - velocity_perpendicular_direction[0] * 0.1, 
+                velocity_vector_endpoint[1] - velocity_direction[1] * 0.1 - velocity_perpendicular_direction[1] * 0.1)
+                gd_ctx.lineTo(velocity_vector_endpoint[0], velocity_vector_endpoint[1])
+                gd_ctx.closePath()
+                gd_ctx.stroke()
+
+                // Draw Planet
+
+                gd_ctx.fillStyle = '#3ee'
+                gd_ctx.beginPath()
+                gd_ctx.arc(planet_center[0], planet_center[1], planet_radius_canvas, 0, Math.PI*2)
+                gd_ctx.closePath()
+                gd_ctx.fill()
+        }
+
+        function gd_updateValues(newValues){
+                console.log(newValues)
+                gd_values = {
+                        ...gd_values,
+                        ...newValues
+                }
+                gd_reset()
+        }
+
+        gd_reset()
+
+        function gd_draw() {
+                if (gd_started) {
+                        gd_updatePhysics()
+                }
+
+                gd_redrawCanvas()
+
+                requestAnimationFrame(gd_draw);
+        }
+
+        gd_draw();
+        </script>               
+        
+
+
+
+
+
+
+
+        <h2>4 - Torque Demonstration</h2>
+
+        <div class="grid justify-between grid-cols-6 mb-4 gap-3">
+
+                <label for="mag" class="flex font-bold w-full col-span-2" >Force Magnitude: </label>
+                <input id="mag" class="block ml-3" type="number" min="0" max="50" oninput="td_updateValues({force:{...td_values.force, magnitude: parseInt(this.value) / 10}})" value="10">
+
+                <label for="r1" class="flex font-bold w-full col-span-2">Force Direction: </label>
+                <input id="r1" class="block ml-3" type="number" min="1" max="100" oninput="td_updateValues({force:{...td_values.force, direction: parseInt(this.value) / 180 * Math.PI}})" value="90">
+
+                <label for="sa" class="flex font-bold w-full col-span-2">Starting Angle: </label>
+                <input id="sa" class="block ml-3" type="number" min="0" max="360" oninput="td_updateValues({default_theta : parseInt(this.value) / 180 * Math.PI})" value="0">
+
+                <button class="col-start-5 col-span-2 cursor-pointer bg-gray-300 rounded" onclick="
+                        (this.innerText=='Restart' ?
+                        ()=>{td_reset(); this.innerText='Start'}:()=>{td_start(); this.innerText='Restart'}
+                        )()">Start</button>
+
+        </div>
+
+        <canvas class="border-2 rounded bg-purple-50" id="torque-demo-canvas" width="800" height="400"></canvas>
+
+        <script>
+
+        const td_canvas = document.getElementById("torque-demo-canvas");
+        const td_ctx = td_canvas.getContext("2d");
+
+        td_canvas.addEventListener('mousemove', (event) => {
+                const rect = td_canvas.getBoundingClientRect(); 
+                
+                const x = event.clientX - rect.left;
+                const y = event.clientY - rect.top;
+
+                localMouseCoords = ctl(TD_BOUNDS, x, y)
+
+                td_values.mouse.x = localMouseCoords[0]
+                td_values.mouse.y = localMouseCoords[1]
+        });
+
+        td_canvas.addEventListener('mousedown', (event) => {
+                td_values.mouse.down = true
+        })
+
+        document.addEventListener('mouseup', (event) => {
+                td_values.mouse.down = false
+        })
+
+        const TD_ASPECT_RATIO = 0.5
+        
+        window.addEventListener("resize", () => resize(td_canvas));
+        resize(td_canvas);
+
+        const TD_BOUNDS = {
+                xBound1: 0, xBound2: 0, yBound1: 0, yBound2: 0
+        }
+
+        let td_started = false
+
+        let td_values = {
+                theta: 0,
+                omega: 0,
+                rod_length: 1.5,
+                mouse: {
+                        x: 0,
+                        y: 0,
+                        down: false,
+                },
+                force: {
+                        direction: Math.PI / 2,
+                        magnitude: 1,
+                        active: false,
+                },
+                default_theta: 0,
+                torque: 0,
+        }
+
+        function td_initialize() {
+                
+        }
+        td_initialize()
+        
+        function td_reset() {
+
+                td_values.theta = td_values.default_theta
+                td_values.omega = 0
+                
+                recalculateBounds(
+                        TD_BOUNDS,
+                        [-td_values.rod_length*3, td_values.rod_length*3],
+                        [-td_values.rod_length*1.5, td_values.rod_length*1.5],
+                        TD_ASPECT_RATIO
+                )
+                
+                td_started = false
+        }
+        
+        function td_start() {
+                td_started = true
+        }
+
+        function td_updatePhysics() {
+                const right_rod_center = ltc(TD_BOUNDS, td_values.rod_length*1.25, 0)
+                
+                td_values.force.active = false
+
+                const mouse_angle = (Math.atan2(td_values.mouse.y, td_values.mouse.x - td_values.rod_length*1.25) + Math.PI * 2) % (Math.PI * 2)
+                const rod_angle = td_values.theta
+                const angle_difference = Math.min(((rod_angle - mouse_angle) + Math.PI * 2) % (Math.PI * 2), 
+                        ((mouse_angle - rod_angle) + Math.PI * 2) % (Math.PI * 2))
+                const sq_distance = (td_values.mouse.x - td_values.rod_length*1.25) * (td_values.mouse.x - td_values.rod_length*1.25) + (td_values.mouse.y * td_values.mouse.y)
+
+                if ((angle_difference < Math.PI / 4) && 
+                sq_distance < (td_values.rod_length*td_values.rod_length * 1.5) && 
+                td_values.mouse.down) {
+                        td_values.force.active = true
+                }
+
+                td_values.torque = 0
+
+                if (td_values.force.active) {
+                        const force_projection = td_values.force.magnitude * Math.sin((Math.PI + td_values.force.direction - td_values.theta) % (Math.PI * 2) - Math.PI)
+                        td_values.torque = Math.sqrt(sq_distance) * force_projection
+                        
+                }
+
+                td_values.omega += td_values.torque / 60
+                td_values.theta += td_values.omega / 60
+
+                td_values.theta += (Math.PI * 2)
+                td_values.theta %= (Math.PI * 2)
+        }
+
+        function td_redrawCanvas() {
+                td_ctx.clearRect(0, 0, td_canvas.width, td_canvas.height);
+
+                const rod_length_canvas = ltc(TD_BOUNDS, td_values.rod_length, 0)[0] - ltc(TD_BOUNDS, 0, 0)[0]
+
+                // Draw Rod (right)
+                const right_rod_center = ltc(TD_BOUNDS, td_values.rod_length*1.25, 0)
+                const right_rod_endpoint = ltc(TD_BOUNDS, td_values.rod_length*1.25+Math.cos(td_values.theta)*td_values.rod_length, Math.sin(td_values.theta)*td_values.rod_length)
+
+                td_ctx.strokeStyle = '#444'
+                td_ctx.lineWidth = 2
+                td_ctx.lineCap = 'round'
+                td_ctx.lineJoin = 'round'
+                td_ctx.beginPath()
+                td_ctx.ellipse(right_rod_center[0], right_rod_center[1], rod_length_canvas, rod_length_canvas, 0, 0, Math.PI * 2)
+                td_ctx.closePath()
+                td_ctx.stroke()
+
+                td_ctx.strokeStyle = '#833'
+                td_ctx.lineWidth = 12
+                td_ctx.lineCap = 'round'
+                td_ctx.lineJoin = 'round'
+                td_ctx.beginPath()
+                td_ctx.moveTo(right_rod_center[0], right_rod_center[1])
+                td_ctx.lineTo(right_rod_endpoint[0], right_rod_endpoint[1])
+                td_ctx.closePath()
+                td_ctx.stroke()
+
+                // Draw Rod (left)
+                const left_rod_center = ltc(TD_BOUNDS, -td_values.rod_length*1.25, 0)
+                const left_rod_endpoint = ltc(TD_BOUNDS, -td_values.rod_length*1.25+Math.cos(td_values.theta)*td_values.rod_length, Math.sin(td_values.theta)*td_values.rod_length * 0.2)
+                
+                td_ctx.strokeStyle = '#444'
+                td_ctx.lineWidth = 2
+                td_ctx.lineCap = 'round'
+                td_ctx.lineJoin = 'round'
+                td_ctx.beginPath()
+                td_ctx.ellipse(left_rod_center[0], left_rod_center[1], rod_length_canvas, rod_length_canvas * 0.2, 0, 0, Math.PI * 2)
+                td_ctx.closePath()
+                td_ctx.stroke()
+
+                td_ctx.strokeStyle = '#833'
+                td_ctx.lineWidth = 6
+                td_ctx.lineCap = 'round'
+                td_ctx.lineJoin = 'round'
+                td_ctx.beginPath()
+                td_ctx.moveTo(left_rod_center[0], left_rod_center[1])
+                td_ctx.lineTo(left_rod_endpoint[0], left_rod_endpoint[1])
+                td_ctx.closePath()
+                td_ctx.stroke()
+
+
+                // Draw Omega Vector
+                const omega_vector_endpoint = ltc(TD_BOUNDS, -td_values.rod_length*1.25, Math.sign(td_values.omega) * Math.log(Math.abs(td_values.omega / 5)+1))
+                const omega_direction = [
+                        omega_vector_endpoint[0] - left_rod_center[0],
+                        omega_vector_endpoint[1] - left_rod_center[1]
+                ]
+                const omega_perpendicular_direction = [
+                        -omega_direction[1],
+                        omega_direction[0],
+                ]
+                td_ctx.strokeStyle = '#338'
+                td_ctx.lineWidth = 4
+                td_ctx.lineCap = 'round'
+                td_ctx.lineJoin = 'round'
+                td_ctx.beginPath()
+                td_ctx.moveTo(left_rod_center[0], left_rod_center[1])
+                td_ctx.lineTo(omega_vector_endpoint[0], omega_vector_endpoint[1])
+                td_ctx.lineTo(omega_vector_endpoint[0] - omega_direction[0] * 0.1 + omega_perpendicular_direction[0] * 0.1, 
+                omega_vector_endpoint[1] - omega_direction[1] * 0.1 + omega_perpendicular_direction[1] * 0.1)
+                td_ctx.lineTo(omega_vector_endpoint[0], omega_vector_endpoint[1])
+                td_ctx.lineTo(omega_vector_endpoint[0] - omega_direction[0] * 0.1 - omega_perpendicular_direction[0] * 0.1, 
+                omega_vector_endpoint[1] - omega_direction[1] * 0.1 - omega_perpendicular_direction[1] * 0.1)
+                td_ctx.lineTo(omega_vector_endpoint[0], omega_vector_endpoint[1])
+                td_ctx.closePath()
+                td_ctx.stroke()
+
+
+                // Draw Force Vector
+                const force_vector_origin = ltc(TD_BOUNDS, td_values.mouse.x, td_values.mouse.y)
+                const force_vector_endpoint = ltc(TD_BOUNDS, td_values.mouse.x + td_values.force.magnitude * Math.cos(td_values.force.direction), 
+                        td_values.mouse.y + td_values.force.magnitude * Math.sin(td_values.force.direction))
+                const force_direction = [
+                        force_vector_endpoint[0] - force_vector_origin[0],
+                        force_vector_endpoint[1] - force_vector_origin[1]
+                ]
+                const force_perpendicular_direction = [
+                        -force_direction[1],
+                        force_direction[0],
+                ]
+                if (td_values.force.active) {
+                        td_ctx.strokeStyle = '#338'
+                } else {
+                        td_ctx.strokeStyle = '#388'
+                }
+                td_ctx.lineWidth = 4
+                td_ctx.lineCap = 'round'
+                td_ctx.lineJoin = 'round'
+                td_ctx.beginPath()
+                td_ctx.moveTo(force_vector_origin[0], force_vector_origin[1])
+                td_ctx.lineTo(force_vector_endpoint[0], force_vector_endpoint[1])
+                td_ctx.lineTo(force_vector_endpoint[0] - force_direction[0] * 0.1 + force_perpendicular_direction[0] * 0.1, 
+                force_vector_endpoint[1] - force_direction[1] * 0.1 + force_perpendicular_direction[1] * 0.1)
+                td_ctx.lineTo(force_vector_endpoint[0], force_vector_endpoint[1])
+                td_ctx.lineTo(force_vector_endpoint[0] - force_direction[0] * 0.1 - force_perpendicular_direction[0] * 0.1, 
+                force_vector_endpoint[1] - force_direction[1] * 0.1 - force_perpendicular_direction[1] * 0.1)
+                td_ctx.lineTo(force_vector_endpoint[0], force_vector_endpoint[1])
+                td_ctx.closePath()
+                td_ctx.stroke()
+
+                // Text
+                td_ctx.font = 'bold 15px sans-serif'
+                td_ctx.textAlign = 'left'
+                
+                td_ctx.fillStyle = '#338'
+                td_ctx.fillText(`ω = ${Math.round(td_values.omega*10)/10}`, left_rod_center[0] + 20, td_canvas.height*0.38)
+                td_ctx.fillStyle = '#388'
+                td_ctx.fillText(`τ = ${Math.round(td_values.torque*10)/10}`, left_rod_center[0] + 20, td_canvas.height*0.32)
+                
+                td_ctx.fillStyle = '#000'
+                td_ctx.textAlign = 'center'
+                td_ctx.fillText('Top View', right_rod_center[0], td_canvas.height * 0.95)
+                td_ctx.fillText('Side View', left_rod_center[0], td_canvas.height * 0.95)
+
+
+        }
+
+        function td_updateValues(newValues){
+                console.log(newValues)
+                td_values = {
+                        ...td_values,
+                        ...newValues
+                }
+                td_reset()
+        }
+
+        td_reset()
+
+        function td_draw() {
+                if (td_started) {
+                        td_updatePhysics()
+                }
+
+                td_redrawCanvas()
+
+                requestAnimationFrame(td_draw);
+        }
+
+        td_draw();
+        </script>               
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         
 
